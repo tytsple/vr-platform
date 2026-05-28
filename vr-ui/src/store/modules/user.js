@@ -20,12 +20,12 @@ export const useUserStore = defineStore('user', {
       const user = {
         id: payload.user_id,
         username: payload.username,
-        role: payload.role,
+        roles: payload.roles || [payload.role],
         tenant_id: payload.tenant_id,
       };
       setUser(user);
       this.user = user;
-      this.roles = [user.role];
+      this.roles = user.roles || [];
       this.permissions = ['*:*:*'];
     },
 

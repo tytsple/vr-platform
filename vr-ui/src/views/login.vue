@@ -42,9 +42,9 @@ async function handleLogin() {
   try {
     await userStore.login(form.username, form.password);
     ElMessage.success('登录成功');
-    const role = userStore.user?.role;
-    if (role === 'tenant' || role === 'tenant_user') router.push('/tenant');
-    else if (role === 'operator') router.push('/operator');
+    const roles = userStore.user?.roles || [];
+    if (roles.includes('tenant')) router.push('/tenant');
+    else if (roles.includes('operator')) router.push('/operator');
     else router.push('/admin');
   } catch (e) {
     // error handled by interceptor

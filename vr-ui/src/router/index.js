@@ -5,6 +5,7 @@ import { getToken } from '@/utils/auth';
 export const constantRoutes = [
   { path: '/login', component: () => import('@/views/login.vue'), hidden: true },
   { path: '/', redirect: '/admin', hidden: true },
+  { path: '/404', component: () => import('@/views/error/404.vue'), hidden: true },
 ];
 
 // Dynamic routes (loaded from backend menus)
@@ -19,42 +20,6 @@ export const asyncRoutes = [
         name: 'AdminDashboard',
         component: () => import('@/views/admin/index.vue'),
         meta: { title: '首页', icon: 'home-filled' },
-      },
-      {
-        path: 'tenants',
-        name: 'Tenants',
-        component: () => import('@/views/vr/tenant/index.vue'),
-        meta: { title: '租户管理', icon: 'office-building' },
-      },
-      {
-        path: 'venues',
-        name: 'Venues',
-        component: () => import('@/views/vr/venue/index.vue'),
-        meta: { title: '场地管理', icon: 'location' },
-      },
-      {
-        path: 'applications',
-        name: 'Applications',
-        component: () => import('@/views/vr/application/index.vue'),
-        meta: { title: '应用管理', icon: 'video-camera' },
-      },
-      {
-        path: 'licenses',
-        name: 'Licenses',
-        component: () => import('@/views/vr/license/index.vue'),
-        meta: { title: '授权管理', icon: 'key' },
-      },
-      {
-        path: 'users',
-        name: 'Users',
-        component: () => import('@/views/system/user/index.vue'),
-        meta: { title: '用户管理', icon: 'user' },
-      },
-      {
-        path: 'stats',
-        name: 'Stats',
-        component: () => import('@/views/vr/stats/index.vue'),
-        meta: { title: '使用统计', icon: 'data-analysis' },
       },
     ],
   },
@@ -88,6 +53,27 @@ const router = createRouter({
   history: createWebHistory(),
   routes: constantRoutes,
   scrollBehavior: () => ({ top: 0 }),
+});
+
+// White list — paths that don't need authentication
+const whiteList = ['/login', '/404'];
+
+router.beforeEach(async (to, from, next) => {
+  const token = getToken();
+
+  if (token) {
+    if (to.path === '/login') {
+      next('/');
+    } else {
+      next();
+    }
+  } else {
+    if (whiteList.includes(to.path)) {
+      next();
+    } else {
+      next('/login');
+    }
+  }
 });
 
 export default router;
