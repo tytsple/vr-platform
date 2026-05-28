@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jjwt.version>0.12.5</jjwt.version>
         <mybatis-starter.version>3.0.3</mybatis-starter.version>
-        <pagehelper.version>2.1.5</pagehelper.version>
+        <pagehelper.version>1.4.7</pagehelper.version>
         <druid.version>1.2.23</druid.version>
         <hutool.version>5.8.28</hutool.version>
         <postgresql.version>42.7.3</postgresql.version>

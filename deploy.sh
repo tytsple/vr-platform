@@ -49,8 +49,7 @@ if [ ! -f "$DOCKER_CONFIG" ]; then
 {
   "registry-mirrors": [
     "https://docker.m.daocloud.io",
-    "https://hub-mirror.c.163.com",
-    "https://mirror.baidubce.com"
+    "https://docker.1ms.run"
   ],
   "log-driver": "json-file",
   "log-opts": {

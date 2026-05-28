@@ -28,10 +28,10 @@ public class SystemController {
             "user", Map.of(
                 "userId", user.getUserId(),
                 "userName", user.getUsername(),
-                "roles", List.of(user.getRole()),
+                "roles", user.getRoles(),
                 "permissions", List.of("*:*:*")
             ),
-            "roles", List.of(user.getRole()),
+            "roles", user.getRoles(),
             "permissions", List.of("*:*:*")
         ));
     }

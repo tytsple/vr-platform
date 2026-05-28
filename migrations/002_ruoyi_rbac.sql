@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
 CREATE TABLE IF NOT EXISTS sys_role (
     role_id BIGSERIAL PRIMARY KEY,
     role_name VARCHAR(30) NOT NULL,
-    role_key VARCHAR(100) NOT NULL,
+    role_key VARCHAR(100) NOT NULL UNIQUE,
     role_sort INTEGER DEFAULT 0,
     status CHAR(1) DEFAULT '0',
     create_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -58,10 +58,10 @@ CREATE TABLE IF NOT EXISTS sys_user_tenant (
 CREATE TABLE IF NOT EXISTS sys_oper_log (
     oper_id BIGSERIAL PRIMARY KEY,
     title VARCHAR(50) DEFAULT '',
-    business_type INT DEFAULT 0,
+    business_type VARCHAR(50) DEFAULT '',
     method VARCHAR(100) DEFAULT '',
     request_method VARCHAR(10) DEFAULT '',
-    operator_type INT DEFAULT 0,
+    operator_type VARCHAR(50) DEFAULT '',
     oper_name VARCHAR(50) DEFAULT '',
     oper_url VARCHAR(255) DEFAULT '',
     oper_ip VARCHAR(128) DEFAULT '',
