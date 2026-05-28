@@ -1,0 +1,26 @@
+# Maven
+target/
+*.jar
+*.war
+
+# Node / Vue
+vr-ui/node_modules/
+vr-ui/dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.env
+
+# Logs
+*.log
