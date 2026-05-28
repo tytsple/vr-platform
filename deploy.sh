@@ -40,7 +40,32 @@ if ! docker compose version &>/dev/null; then
     exit 1
 fi
 
-# ---- 2. 生成 .env ----
+# ---- 2. 配置 Docker 镜像加速 ----
+DOCKER_CONFIG="/etc/docker/daemon.json"
+if [ ! -f "$DOCKER_CONFIG" ]; then
+    log "配置 Docker 镜像加速（国内源）..."
+    sudo mkdir -p /etc/docker
+    sudo tee "$DOCKER_CONFIG" > /dev/null <<'JSON'
+{
+  "registry-mirrors": [
+    "https://docker.m.daocloud.io",
+    "https://dockerhub.timeweb.cloud",
+    "https://hub.rat.dev"
+  ],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  }
+}
+JSON
+    sudo systemctl restart docker
+    log "Docker 镜像加速已配置"
+else
+    log "已存在 $DOCKER_CONFIG，跳过镜像加速配置"
+fi
+
+# ---- 3. 生成 .env ----
 if [ ! -f .env ]; then
     JWT_SECRET="$(openssl rand -hex 32 2>/dev/null || cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 64)"
     cat > .env <<EOF
@@ -55,13 +80,13 @@ fi
 
 source .env
 
-# ---- 3. 检查迁移脚本 ----
+# ---- 4. 检查迁移脚本 ----
 if [ ! -f migrations/001_init.sql ]; then
     err "缺少 migrations/001_init.sql，部署将失败。"
     exit 1
 fi
 
-# ---- 4. 构建并启动 ----
+# ---- 5. 构建并启动 ----
 log "开始构建 Docker 镜像（首次构建约需 5-10 分钟）..."
 
 docker compose build --pull
@@ -69,7 +94,7 @@ docker compose build --pull
 log "启动所有服务..."
 docker compose up -d
 
-# ---- 5. 等待健康检查 ----
+# ---- 6. 等待健康检查 ----
 log "等待服务就绪..."
 
 MAX_WAIT=120
@@ -89,12 +114,12 @@ if [ $ELAPSED -ge $MAX_WAIT ]; then
     warn "部分服务可能未完全就绪，请检查日志: docker compose logs"
 fi
 
-# ---- 6. 首次数据库初始化 ----
+# ---- 7. 首次数据库初始化 ----
 log "等待数据库初始化完成..."
 sleep 3
 docker compose exec -T postgres psql -U vr_manager -d vr_manager -c "SELECT COUNT(*) AS table_count FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null || true
 
-# ---- 7. 汇总 ----
+# ---- 8. 汇总 ----
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 
 echo ""
