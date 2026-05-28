@@ -3,42 +3,53 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
-    <mirrors>
-        <!-- Maven Central → 阿里云 -->
-        <mirror>
-            <id>aliyun-public</id>
-            <mirrorOf>central</mirrorOf>
-            <name>Aliyun Maven Central</name>
-            <url>https://maven.aliyun.com/repository/public</url>
-        </mirror>
-        <!-- Spring release/milestone/snapshot → 阿里云 -->
-        <mirror>
-            <id>aliyun-spring</id>
-            <mirrorOf>spring-release,spring-milestones,spring-snapshots</mirrorOf>
-            <name>Aliyun Spring</name>
-            <url>https://maven.aliyun.com/repository/spring</url>
-        </mirror>
-        <!-- Google → 阿里云 -->
-        <mirror>
-            <id>aliyun-google</id>
-            <mirrorOf>google-maven-central</mirrorOf>
-            <name>Aliyun Google</name>
-            <url>https://maven.aliyun.com/repository/google</url>
-        </mirror>
-        <!-- Gradle plugin → 阿里云 -->
-        <mirror>
-            <id>aliyun-gradle</id>
-            <mirrorOf>gradle-plugins</mirrorOf>
-            <name>Aliyun Gradle Plugin</name>
-            <url>https://maven.aliyun.com/repository/gradle-plugin</url>
-        </mirror>
-        <!-- 其他所有仓库 → 华为云兜底 -->
-        <mirror>
-            <id>huawei</id>
-            <mirrorOf>*</mirrorOf>
-            <name>Huawei Cloud (catch-all)</name>
-            <url>https://mirrors.huaweicloud.com/repository/maven</url>
-        </mirror>
-    </mirrors>
+    <!-- 不用 mirror（强制单点），改用 profile 多仓库回退策略 -->
+    <profiles>
+        <profile>
+            <id>china</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+            <repositories>
+                <!-- 1. 阿里云 central（国内快） -->
+                <repository>
+                    <id>aliyun-public</id>
+                    <url>https://maven.aliyun.com/repository/public</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
+                <!-- 2. 阿里云 spring -->
+                <repository>
+                    <id>aliyun-spring</id>
+                    <url>https://maven.aliyun.com/repository/spring</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
+                <!-- 3. Maven Central 直连（兜底，完整） -->
+                <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </repository>
+            </repositories>
+
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>aliyun-plugin</id>
+                    <url>https://maven.aliyun.com/repository/public</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </pluginRepository>
+                <pluginRepository>
+                    <id>central-plugin</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                    <releases><enabled>true</enabled></releases>
+                    <snapshots><enabled>false</enabled></snapshots>
+                </pluginRepository>
+            </pluginRepositories>
+        </profile>
+    </profiles>
 
 </settings>
