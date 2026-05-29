@@ -113,19 +113,23 @@ async function openEdit(row) {
     const res = await getUser(row.userId || row.id);
     const data = res.data || {};
     const u = data.user || data;
-    form.userName = u.userName || '';
-    form.nickName = u.nickName || '';
-    form.roleKey = (data.roles && data.roles.length > 0) ? data.roles[0] : '';
-    form.tenantId = data.tenantId || '';
-    form.status = u.status || '0';
-    form.password = '';
+    Object.assign(form, {
+      userName: u.userName || '',
+      nickName: u.nickName || '',
+      roleKey: (data.roles && data.roles.length > 0) ? data.roles[0] : '',
+      tenantId: data.tenantId || '',
+      status: u.status || '0',
+      password: '',
+    });
   } catch {
-    form.userName = row.userName || '';
-    form.nickName = row.nickName || '';
-    form.roleKey = '';
-    form.tenantId = '';
-    form.status = row.status || '0';
-    form.password = '';
+    Object.assign(form, {
+      userName: row.userName || '',
+      nickName: row.nickName || '',
+      roleKey: '',
+      tenantId: '',
+      status: row.status || '0',
+      password: '',
+    });
   }
   dialogVisible.value = true;
 }
