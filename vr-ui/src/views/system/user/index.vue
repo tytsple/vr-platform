@@ -2,23 +2,19 @@
   <div class="crud-page">
     <el-card>
       <div class="crud-header">
-        <el-input v-model="search" placeholder="搜索用户名" clearable style="width:220px" @input="fetchData" />
+        <el-input v-model="search" placeholder="搜索用户名" clearable style="width:220px" />
         <el-button type="primary" @click="openAdd">新增用户</el-button>
       </div>
-      <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="email" label="邮箱" />
-        <el-table-column prop="phone" label="电话" />
-        <el-table-column prop="role_name" label="角色" width="100">
-          <template #default="{ row }">
-            <el-tag>{{ { admin: '管理员', tenant: '租户', tenant_user: '租户用户', operator: '运维' }[row.role] || row.role }}</el-tag>
-          </template>
-        </el-table-column>
+      <el-table :data="filteredData" stripe v-loading="loading">
+        <el-table-column prop="userId" label="ID" width="80" />
+        <el-table-column prop="userName" label="用户名" />
+        <el-table-column prop="nickName" label="昵称" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
+            <el-tag :type="row.status === '0' ? 'success' : 'danger'">{{ row.status === '0' ? '正常' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -30,35 +26,19 @@
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px" @close="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" :disabled="!!editingId" />
+        <el-form-item label="用户名" prop="userName">
+          <el-input v-model="form.userName" :disabled="!!editingId" />
         </el-form-item>
         <el-form-item label="密码" :prop="editingId ? '' : 'password'">
           <el-input v-model="form.password" type="password" show-password :placeholder="editingId ? '留空不修改' : '请输入密码'" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" />
+        <el-form-item label="昵称">
+          <el-input v-model="form.nickName" />
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="form.phone" />
-        </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="form.role" style="width:100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="租户" value="tenant" />
-            <el-option label="租户用户" value="tenant_user" />
-            <el-option label="运维" value="operator" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="租户" v-if="form.role === 'tenant' || form.role === 'tenant_user'">
-          <el-select v-model="form.tenant_id" style="width:100%" placeholder="请选择">
-            <el-option v-for="t in tenants" :key="t.id" :label="t.name" :value="t.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item label="状态">
           <el-select v-model="form.status" style="width:100%">
-            <el-option label="启用" value="active" />
-            <el-option label="停用" value="inactive" />
+            <el-option label="正常" value="0" />
+            <el-option label="禁用" value="1" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -74,58 +54,60 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { listUser, getUser, addUser, updateUser, delUser } from '@/api/system/user';
-import { listTenant } from '@/api/vr/tenant';
 
 const search = ref('');
 const loading = ref(false);
 const tableData = ref([]);
-const tenants = ref([]);
 const dialogVisible = ref(false);
 const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ username: '', password: '', email: '', phone: '', role: 'tenant', tenant_id: '', status: 'active' });
+const form = reactive({ userName: '', password: '', nickName: '', status: '0' });
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
+  userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
 };
 const dialogTitle = computed(() => editingId.value ? '编辑用户' : '新增用户');
+const filteredData = computed(() => {
+  if (!search.value) return tableData.value;
+  return tableData.value.filter(d => d.userName && d.userName.includes(search.value));
+});
 
 async function fetchData() {
   loading.value = true;
   try {
     const res = await listUser();
-    let data = res.data || res.rows || [];
-    if (search.value) data = data.filter(d => d.username && d.username.includes(search.value));
-    tableData.value = data;
+    tableData.value = res.data || res.rows || [];
   } finally { loading.value = false; }
-}
-
-async function loadTenants() {
-  try { const r = await listTenant(); tenants.value = r.data || r.rows || []; } catch {}
 }
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { username: '', password: '', email: '', phone: '', role: 'tenant', tenant_id: '', status: 'active' });
+  Object.assign(form, { userName: '', password: '', nickName: '', status: '0' });
   dialogVisible.value = true;
 }
 
 async function openEdit(row) {
-  editingId.value = row.id;
+  editingId.value = row.userId || row.id;
   try {
-    const res = await getUser(row.id);
+    const res = await getUser(row.userId || row.id);
     const d = res.data || row;
-    Object.assign(form, { ...d, password: '' });
-  } catch { Object.assign(form, { ...row, password: '' }); }
+    form.userName = d.userName || '';
+    form.nickName = d.nickName || '';
+    form.status = d.status || '0';
+    form.password = '';
+  } catch {
+    form.userName = row.userName || '';
+    form.nickName = row.nickName || '';
+    form.status = row.status || '0';
+    form.password = '';
+  }
   dialogVisible.value = true;
 }
 
 async function handleDel(row) {
   await ElMessageBox.confirm('确认删除该用户？', '提示', { type: 'warning' });
-  await delUser(row.id);
+  await delUser(row.userId || row.id);
   ElMessage.success('删除成功');
   fetchData();
 }
@@ -135,8 +117,8 @@ async function handleSubmit() {
   if (!valid) return;
   submitting.value = true;
   try {
-    const payload = { ...form };
-    if (editingId.value && !payload.password) delete payload.password;
+    const payload = { userName: form.userName, nickName: form.nickName, status: form.status };
+    if (form.password) payload.password = form.password;
     if (editingId.value) {
       await updateUser(editingId.value, payload);
       ElMessage.success('更新成功');
@@ -151,7 +133,7 @@ async function handleSubmit() {
 
 function resetForm() { formRef.value?.resetFields(); }
 
-onMounted(() => { fetchData(); loadTenants(); });
+onMounted(fetchData);
 </script>
 
 <style scoped>

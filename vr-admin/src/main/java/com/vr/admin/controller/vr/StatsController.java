@@ -20,10 +20,13 @@ public class StatsController extends BaseController {
     @GetMapping("/stats")
     @PreAuthorize("@ss.hasRole('admin')")
     public List<TenantStats> stats(
-            @RequestParam(required = false) LocalDateTime from,
-            @RequestParam(required = false) LocalDateTime to,
-            @RequestParam(required = false) Long venue_id) {
-        List<TenantStats> list = sessionMapper.selectSessionStats();
+            @RequestParam(required = false) Long tenant_id) {
+        List<TenantStats> list;
+        if (tenant_id != null && tenant_id > 0) {
+            list = sessionMapper.selectSessionStatsByTenantId(tenant_id);
+        } else {
+            list = sessionMapper.selectSessionStats();
+        }
         return list != null ? list : List.of();
     }
 
