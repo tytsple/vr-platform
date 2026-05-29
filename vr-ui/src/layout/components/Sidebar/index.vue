@@ -14,17 +14,17 @@
       <span v-else>VR</span>
     </div>
     <template v-for="item in menuRoutes" :key="item.path">
-      <el-menu-item :index="resolvePath(item)" v-if="!item.children?.length">
+      <el-menu-item :index="item.path" v-if="!item.children?.length">
         <el-icon><component :is="item.meta?.icon || 'menu'" /></el-icon>
-        <template #title>{{ item.meta?.title || item.name }}</template>
+        <template #title>{{ item.meta?.title }}</template>
       </el-menu-item>
-      <el-sub-menu :index="resolvePath(item)" v-else>
+      <el-sub-menu :index="item.path" v-else>
         <template #title>
           <el-icon><component :is="item.meta?.icon || 'folder'" /></el-icon>
-          <span>{{ item.meta?.title || item.name }}</span>
+          <span>{{ item.meta?.title }}</span>
         </template>
-        <el-menu-item v-for="child in item.children" :key="child.path" :index="resolvePath(item) + '/' + child.path">
-          {{ child.meta?.title || child.name }}
+        <el-menu-item v-for="child in item.children" :key="child.path" :index="child.path">
+          {{ child.meta?.title }}
         </el-menu-item>
       </el-sub-menu>
     </template>
@@ -42,11 +42,6 @@ const props = defineProps({
 
 const route = useRoute();
 const activeMenu = computed(() => route.path);
-
-function resolvePath(item) {
-  if (item.path.startsWith('/')) return item.path;
-  return '/' + item.path;
-}
 </script>
 
 <style scoped>
