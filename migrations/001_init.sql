@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS tenants (
     id           BIGSERIAL    PRIMARY KEY,
     name         VARCHAR(255) NOT NULL,
     contact_info TEXT,
-    created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at   TIMESTAMP  NOT NULL DEFAULT NOW()
 );
 
 -- 2. Venues (physical VR sites)
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS venues (
     name             VARCHAR(255) NOT NULL,
     address          TEXT,
     controller_token VARCHAR(255),
-    created_at       TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at       TIMESTAMP  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_venues_tenant_id ON venues(tenant_id);
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS applications (
     id          BIGSERIAL    PRIMARY KEY,
     name        VARCHAR(255) NOT NULL,
     description TEXT,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at  TIMESTAMP  NOT NULL DEFAULT NOW()
 );
 
 -- 4. Application versions
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS application_versions (
     id             BIGSERIAL    PRIMARY KEY,
     application_id BIGINT       NOT NULL REFERENCES applications(id),
     version        VARCHAR(100) NOT NULL,
-    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at     TIMESTAMP  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_app_versions_app_id ON application_versions(application_id);
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS licenses (
     quota_type     VARCHAR(50),
     quota_limit    BIGINT,
     quota_used     BIGINT      DEFAULT 0,
-    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
     UNIQUE (tenant_id, application_id)
 );
 
@@ -63,10 +63,10 @@ CREATE TABLE IF NOT EXISTS sessions (
     venue_id       BIGINT       NOT NULL REFERENCES venues(id),
     application_id BIGINT       NOT NULL REFERENCES applications(id),
     version        VARCHAR(100) NOT NULL,
-    started_at     TIMESTAMPTZ  NOT NULL,
-    ended_at       TIMESTAMPTZ,
+    started_at     TIMESTAMP  NOT NULL,
+    ended_at       TIMESTAMP,
     status         VARCHAR(20)  NOT NULL DEFAULT 'active',
-    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    created_at     TIMESTAMP  NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_session_status CHECK (status IN ('active', 'normal', 'abnormal'))
 );
 

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     password VARCHAR(100) NOT NULL,
     status CHAR(1) DEFAULT '0',   -- 0=normal, 1=disabled
     del_flag CHAR(1) DEFAULT '0',  -- 0=active, 2=deleted
-    create_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    create_time TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS sys_role (
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS sys_role (
     role_key VARCHAR(100) NOT NULL UNIQUE,
     role_sort INTEGER DEFAULT 0,
     status CHAR(1) DEFAULT '0',
-    create_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    create_time TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS sys_menu (
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS sys_menu (
     status CHAR(1) DEFAULT '0',
     perms VARCHAR(100) DEFAULT '',
     icon VARCHAR(100) DEFAULT '#',
-    create_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    create_time TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS sys_user_role (
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS sys_oper_log (
     status INT DEFAULT 0,
     error_msg TEXT DEFAULT '',
     cost_time BIGINT DEFAULT 0,
-    oper_time TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    oper_time TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS sys_config (
@@ -80,8 +80,8 @@ CREATE TABLE IF NOT EXISTS sys_config (
     config_value VARCHAR(500) DEFAULT '',
     config_type CHAR(1) DEFAULT 'N',
     create_by VARCHAR(64) DEFAULT '',
-    create_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    create_time TIMESTAMP DEFAULT NOW(),
     update_by VARCHAR(64) DEFAULT '',
-    update_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    update_time TIMESTAMP DEFAULT NOW(),
     remark VARCHAR(500) DEFAULT ''
 );
