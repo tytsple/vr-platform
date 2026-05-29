@@ -29,15 +29,15 @@ const router = useRouter();
 const userStore = useUserStore();
 
 const homePath = computed(() => {
-  const role = userStore.user?.role;
-  if (role === 'tenant' || role === 'tenant_user') return '/tenant';
-  if (role === 'operator') return '/operator';
+  const roles = userStore.user?.roles || [];
+  if (roles.includes('tenant')) return '/tenant';
+  if (roles.includes('operator')) return '/operator';
   return '/admin';
 });
 
 const breadcrumbs = computed(() => {
   const segs = route.path.split('/').filter(Boolean);
-  if (segs.length === 0 || (segs.length === 1 && segs[0] === userStore.user?.role)) return [];
+  if (segs.length === 0) return [];
   return segs.map(s => {
     const matched = route.matched.find(m => m.path === s || m.path === '/' + s);
     return matched?.meta?.title || s;

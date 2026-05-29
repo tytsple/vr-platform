@@ -23,12 +23,8 @@ public class SessionTracker implements SessionLifecycle {
     private final int staleTimeoutSeconds;
 
     public SessionTracker(SessionMapper sessionMapper) {
-        this(sessionMapper, 30);
-    }
-
-    public SessionTracker(SessionMapper sessionMapper, int staleTimeoutSeconds) {
         this.sessionMapper = sessionMapper;
-        this.staleTimeoutSeconds = staleTimeoutSeconds;
+        this.staleTimeoutSeconds = 30;
     }
 
     @Override

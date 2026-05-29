@@ -15,38 +15,28 @@
     </el-row>
 
     <el-card style="margin-top:16px">
-      <template #header>场地列表</template>
+      <template #header>我的场地</template>
       <el-table :data="venues" stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="address" label="地址" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="token" label="Token" :show-overflow-tooltip="true" />
+        <el-table-column prop="controllerToken" label="Token" :show-overflow-tooltip="true" />
       </el-table>
     </el-card>
 
     <el-card style="margin-top:16px">
       <template #header>授权信息</template>
       <el-table :data="licenses" stripe v-loading="licLoading">
-        <el-table-column prop="app_name" label="应用" />
-        <el-table-column prop="license_type" label="类型" width="100">
+        <el-table-column prop="applicationId" label="应用ID" width="120" />
+        <el-table-column prop="granted" label="授权" width="80">
           <template #default="{ row }">
-            <el-tag>{{ row.license_type === 'perpetual' ? '永久' : row.license_type === 'subscription' ? '订阅' : '试用' }}</el-tag>
+            <el-tag :type="row.granted ? 'success' : 'danger'">{{ row.granted ? '已授权' : '未授权' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="max_quota" label="限额" width="100">
+        <el-table-column prop="quotaType" label="配额类型" width="100" />
+        <el-table-column label="限额" width="100">
           <template #default="{ row }">
-            {{ row.max_quota === -1 ? '无限制' : row.max_quota }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="start_date" label="开始日期" width="120" />
-        <el-table-column prop="end_date" label="结束日期" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '有效' : '停用' }}</el-tag>
+            {{ row.quotaLimit == null ? '无限制' : `${row.quotaUsed || 0}/${row.quotaLimit}` }}
           </template>
         </el-table-column>
       </el-table>
@@ -56,11 +46,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Location, VideoCamera, Key, DataAnalysis } from '@element-plus/icons-vue';
+import { Location, Key, VideoCamera, DataAnalysis } from '@element-plus/icons-vue';
 import { useUserStore } from '@/store/modules/user';
-import { listVenue } from '@/api/vr/venue';
-import { listLicense } from '@/api/vr/license';
-import { getStats } from '@/api/vr/stats';
+import { listTenantVenues } from '@/api/vr/venue';
+import { listTenantLicenses } from '@/api/vr/license';
+import { getTenantStats } from '@/api/vr/stats';
 
 const userStore = useUserStore();
 const loading = ref(false);
@@ -79,24 +69,24 @@ onMounted(async () => {
   const tenantId = userStore.user?.tenant_id;
   loading.value = true;
   try {
-    const res = await listVenue(tenantId);
+    const res = await listTenantVenues();
     venues.value = res.data || res.rows || [];
     stats.value[0].value = venues.value.length;
   } finally { loading.value = false; }
 
   licLoading.value = true;
   try {
-    const res = await listLicense(tenantId);
+    const res = await listTenantLicenses();
     licenses.value = res.data || res.rows || [];
     stats.value[1].value = licenses.value.length;
-    const appSet = new Set(licenses.value.map(l => l.app_name || l.application_name).filter(Boolean));
-    stats.value[2].value = appSet.size;
+    const appIds = new Set(licenses.value.map(l => l.applicationId).filter(Boolean));
+    stats.value[2].value = appIds.size;
   } finally { licLoading.value = false; }
 
   try {
-    const res = await getStats({ tenant_id: tenantId });
+    const res = await getTenantStats();
     const rows = res.data || res.rows || [];
-    stats.value[3].value = rows.reduce((sum, r) => sum + (r.session_count || 0), 0);
+    stats.value[3].value = rows.reduce((sum, r) => sum + (r.count || 0), 0);
   } catch {}
 });
 </script>

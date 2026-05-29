@@ -8,25 +8,25 @@
         <el-button type="primary" @click="openAdd">新增授权</el-button>
       </div>
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="tenant_name" label="租户" />
-        <el-table-column prop="app_name" label="应用" />
-        <el-table-column prop="license_type" label="类型" width="100">
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column label="租户" width="120">
+          <template #default="{ row }">{{ tenantMap[row.tenantId] || row.tenantId }}</template>
+        </el-table-column>
+        <el-table-column label="应用" width="120">
+          <template #default="{ row }">{{ appMap[row.applicationId] || row.applicationId }}</template>
+        </el-table-column>
+        <el-table-column prop="granted" label="授权" width="80">
           <template #default="{ row }">
-            <el-tag>{{ row.license_type === 'perpetual' ? '永久' : row.license_type === 'subscription' ? '订阅' : '试用' }}</el-tag>
+            <el-tag :type="row.granted ? 'success' : 'danger'">{{ row.granted ? '已授权' : '未授权' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="max_quota" label="限额" width="100">
+        <el-table-column prop="quotaType" label="配额类型" width="100" />
+        <el-table-column label="限额" width="100">
           <template #default="{ row }">
-            {{ row.max_quota === -1 ? '无限制' : row.max_quota }}
+            {{ row.quotaLimit == null ? '无限制' : `${row.quotaUsed || 0}/${row.quotaLimit}` }}
           </template>
         </el-table-column>
-        <el-table-column prop="start_date" label="开始日期" width="120" />
-        <el-table-column prop="end_date" label="结束日期" width="120" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '有效' : '停用' }}</el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -38,38 +38,24 @@
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px" @close="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="租户" prop="tenant_id">
-          <el-select v-model="form.tenant_id" style="width:100%" placeholder="请选择">
+        <el-form-item label="租户" prop="tenantId">
+          <el-select v-model="form.tenantId" style="width:100%" placeholder="请选择">
             <el-option v-for="t in tenants" :key="t.id" :label="t.name" :value="t.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="应用" prop="app_id">
-          <el-select v-model="form.app_id" style="width:100%" placeholder="请选择">
+        <el-form-item label="应用" prop="applicationId">
+          <el-select v-model="form.applicationId" style="width:100%" placeholder="请选择">
             <el-option v-for="a in apps" :key="a.id" :label="a.name" :value="a.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="类型" prop="license_type">
-          <el-select v-model="form.license_type" style="width:100%">
-            <el-option label="永久" value="perpetual" />
-            <el-option label="订阅" value="subscription" />
-            <el-option label="试用" value="trial" />
-          </el-select>
+        <el-form-item label="授权状态">
+          <el-switch v-model="form.granted" active-text="已授权" inactive-text="未授权" />
         </el-form-item>
-        <el-form-item label="限额" prop="max_quota">
-          <el-input-number v-model="form.max_quota" :min="-1" style="width:100%" />
-          <span style="color:#909399;font-size:12px;margin-left:8px">-1 表示无限制</span>
+        <el-form-item label="配额类型">
+          <el-input v-model="form.quotaType" placeholder="留空表示无配额限制" />
         </el-form-item>
-        <el-form-item label="开始日期" prop="start_date">
-          <el-date-picker v-model="form.start_date" type="date" style="width:100%" value-format="YYYY-MM-DD" />
-        </el-form-item>
-        <el-form-item label="结束日期">
-          <el-date-picker v-model="form.end_date" type="date" style="width:100%" value-format="YYYY-MM-DD" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" style="width:100%">
-            <el-option label="有效" value="active" />
-            <el-option label="停用" value="inactive" />
-          </el-select>
+        <el-form-item label="配额上限">
+          <el-input-number v-model="form.quotaLimit" :min="0" style="width:100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -92,37 +78,46 @@ const loading = ref(false);
 const tableData = ref([]);
 const tenants = ref([]);
 const apps = ref([]);
+const tenantMap = ref({});
+const appMap = ref({});
 const dialogVisible = ref(false);
 const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ tenant_id: '', app_id: '', license_type: 'trial', max_quota: 100, start_date: '', end_date: '', status: 'active' });
+const form = reactive({ tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0 });
 const rules = {
-  tenant_id: [{ required: true, message: '请选择租户', trigger: 'change' }],
-  app_id: [{ required: true, message: '请选择应用', trigger: 'change' }],
-  license_type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  max_quota: [{ required: true, message: '请输入限额', trigger: 'blur' }],
-  start_date: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
+  tenantId: [{ required: true, message: '请选择租户', trigger: 'change' }],
+  applicationId: [{ required: true, message: '请选择应用', trigger: 'change' }],
 };
 const dialogTitle = computed(() => editingId.value ? '编辑授权' : '新增授权');
 
 async function fetchData() {
   loading.value = true;
   try {
-    const res = await listLicense(filterTenantId.value || undefined);
+    const res = await listLicense(filterTenantId.value || 0);
     tableData.value = res.data || res.rows || [];
   } finally { loading.value = false; }
 }
 
 async function loadRefs() {
-  try { const r = await listTenant(); tenants.value = r.data || r.rows || []; } catch {}
-  try { const r = await listApp(); apps.value = r.data || r.rows || []; } catch {}
+  try {
+    const r = await listTenant();
+    const list = r.data || r.rows || [];
+    tenants.value = list;
+    list.forEach(t => { tenantMap.value[t.id] = t.name; });
+  } catch {}
+  try {
+    const r = await listApp();
+    const list = r.data || r.rows || [];
+    apps.value = list;
+    list.forEach(a => { appMap.value[a.id] = a.name; });
+  } catch {}
 }
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { tenant_id: '', app_id: '', license_type: 'trial', max_quota: 100, start_date: '', end_date: '', status: 'active' });
+  Object.assign(form, { tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0 });
   dialogVisible.value = true;
 }
 
@@ -131,8 +126,16 @@ async function openEdit(row) {
   try {
     const res = await getLicense(row.id);
     const d = res.data || row;
-    Object.assign(form, d);
-  } catch { Object.assign(form, row); }
+    Object.assign(form, {
+      tenantId: d.tenantId, applicationId: d.applicationId,
+      granted: d.granted, quotaType: d.quotaType || '', quotaLimit: d.quotaLimit || 0
+    });
+  } catch {
+    Object.assign(form, {
+      tenantId: row.tenantId, applicationId: row.applicationId,
+      granted: row.granted, quotaType: row.quotaType || '', quotaLimit: row.quotaLimit || 0
+    });
+  }
   dialogVisible.value = true;
 }
 
@@ -148,11 +151,19 @@ async function handleSubmit() {
   if (!valid) return;
   submitting.value = true;
   try {
+    const payload = {
+      tenantId: form.tenantId,
+      applicationId: form.applicationId,
+      granted: form.granted,
+      quotaType: form.quotaType,
+      quotaLimit: form.quotaLimit,
+      quotaUsed: 0,
+    };
     if (editingId.value) {
-      await updateLicense(editingId.value, form);
+      await updateLicense(editingId.value, payload);
       ElMessage.success('更新成功');
     } else {
-      await addLicense(form);
+      await addLicense(payload);
       ElMessage.success('新增成功');
     }
     dialogVisible.value = false;

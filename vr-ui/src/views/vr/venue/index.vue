@@ -2,19 +2,15 @@
   <div class="crud-page">
     <el-card>
       <div class="crud-header">
-        <el-input v-model="search" placeholder="搜索名称" clearable style="width:220px" @input="fetchData" />
+        <el-input v-model="search" placeholder="搜索名称" clearable style="width:220px" />
         <el-button type="primary" @click="openAdd">新增场地</el-button>
       </div>
-      <el-table :data="tableData" stripe v-loading="loading">
+      <el-table :data="filteredData" stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" />
-        <el-table-column prop="address" label="地址" />
-        <el-table-column prop="tenant_name" label="所属租户" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="token" label="Token" :show-overflow-tooltip="true" />
+        <el-table-column prop="address" label="地址" :show-overflow-tooltip="true" />
+        <el-table-column prop="tenantId" label="所属租户ID" width="120" />
+        <el-table-column prop="controllerToken" label="Token" :show-overflow-tooltip="true" />
         <el-table-column label="操作" width="240">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -30,18 +26,12 @@
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="form.address" />
+        <el-form-item label="地址">
+          <el-input v-model="form.address" type="textarea" />
         </el-form-item>
-        <el-form-item label="租户" prop="tenant_id">
-          <el-select v-model="form.tenant_id" style="width:100%" placeholder="请选择租户">
+        <el-form-item label="租户" prop="tenantId">
+          <el-select v-model="form.tenantId" style="width:100%" placeholder="请选择租户">
             <el-option v-for="t in tenants" :key="t.id" :label="t.name" :value="t.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" style="width:100%">
-            <el-option label="启用" value="active" />
-            <el-option label="停用" value="inactive" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -68,20 +58,22 @@ const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ name: '', address: '', tenant_id: '', status: 'active' });
+const form = reactive({ name: '', address: '', tenantId: '' });
 const rules = {
   name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-  tenant_id: [{ required: true, message: '请选择租户', trigger: 'change' }],
+  tenantId: [{ required: true, message: '请选择租户', trigger: 'change' }],
 };
 const dialogTitle = computed(() => editingId.value ? '编辑场地' : '新增场地');
+const filteredData = computed(() => {
+  if (!search.value) return tableData.value;
+  return tableData.value.filter(d => d.name && d.name.includes(search.value));
+});
 
 async function fetchData() {
   loading.value = true;
   try {
     const res = await listVenue();
-    let data = res.data || res.rows || [];
-    if (search.value) data = data.filter(d => d.name && d.name.includes(search.value));
-    tableData.value = data;
+    tableData.value = res.data || res.rows || [];
   } finally { loading.value = false; }
 }
 
@@ -94,7 +86,9 @@ async function loadTenants() {
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { name: '', address: '', tenant_id: '', status: 'active' });
+  form.name = '';
+  form.address = '';
+  form.tenantId = '';
   dialogVisible.value = true;
 }
 
@@ -103,8 +97,14 @@ async function openEdit(row) {
   try {
     const res = await getVenue(row.id);
     const d = res.data || row;
-    Object.assign(form, { name: d.name, address: d.address, tenant_id: d.tenant_id, status: d.status });
-  } catch { Object.assign(form, row); }
+    form.name = d.name || '';
+    form.address = d.address || '';
+    form.tenantId = d.tenantId || '';
+  } catch {
+    form.name = row.name || '';
+    form.address = row.address || '';
+    form.tenantId = row.tenantId || '';
+  }
   dialogVisible.value = true;
 }
 
@@ -118,7 +118,8 @@ async function handleDel(row) {
 async function regen(row) {
   await ElMessageBox.confirm('确认重置Token？旧Token将立即失效', '提示', { type: 'warning' });
   const res = await regenToken(row.id);
-  ElMessage.success('新Token: ' + (res.data?.token || '已重置'));
+  const token = res.data?.controller_token || res.data?.token || '已重置';
+  ElMessage.success('新Token: ' + token);
   fetchData();
 }
 
@@ -128,10 +129,10 @@ async function handleSubmit() {
   submitting.value = true;
   try {
     if (editingId.value) {
-      await updateVenue(editingId.value, form);
+      await updateVenue(editingId.value, { name: form.name, address: form.address, tenantId: form.tenantId });
       ElMessage.success('更新成功');
     } else {
-      await addVenue(form);
+      await addVenue({ name: form.name, address: form.address, tenantId: form.tenantId });
       ElMessage.success('新增成功');
     }
     dialogVisible.value = false;

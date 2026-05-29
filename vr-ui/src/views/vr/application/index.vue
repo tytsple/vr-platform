@@ -2,17 +2,14 @@
   <div class="crud-page">
     <el-card>
       <div class="crud-header">
-        <el-input v-model="search" placeholder="搜索名称" clearable style="width:220px" @input="fetchData" />
+        <el-input v-model="search" placeholder="搜索名称" clearable style="width:220px" />
         <el-button type="primary" @click="openAdd">新增应用</el-button>
       </div>
-      <el-table :data="tableData" stripe v-loading="loading">
+      <el-table :data="filteredData" stripe v-loading="loading">
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" />
         <el-table-column prop="description" label="描述" :show-overflow-tooltip="true" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 'active' ? 'success' : 'warning'">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column label="操作" width="260">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -23,20 +20,13 @@
       </el-table>
     </el-card>
 
-    <!-- App edit dialog -->
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px" @close="resetForm">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="form.status" style="width:100%">
-            <el-option label="启用" value="active" />
-            <el-option label="停用" value="inactive" />
-          </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -45,7 +35,6 @@
       </template>
     </el-dialog>
 
-    <!-- Versions dialog -->
     <el-dialog title="版本管理" v-model="versionVisible" width="500px">
       <div style="margin-bottom:12px; display:flex; gap:8px">
         <el-input v-model="newVersion" placeholder="版本号" style="flex:1" />
@@ -53,7 +42,7 @@
       </div>
       <el-table :data="versions" stripe size="small">
         <el-table-column prop="version" label="版本号" />
-        <el-table-column prop="created_at" label="创建时间" width="180" />
+        <el-table-column prop="createdAt" label="创建时间" width="180" />
         <el-table-column label="操作" width="80">
           <template #default="{ row: vr }">
             <el-button size="small" link type="danger" @click="delVer(vr.id)">删除</el-button>
@@ -77,11 +66,14 @@ const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ name: '', description: '', status: 'active' });
+const form = reactive({ name: '', description: '' });
 const rules = { name: [{ required: true, message: '请输入名称', trigger: 'blur' }] };
 const dialogTitle = computed(() => editingId.value ? '编辑应用' : '新增应用');
+const filteredData = computed(() => {
+  if (!search.value) return tableData.value;
+  return tableData.value.filter(d => d.name && d.name.includes(search.value));
+});
 
-// Version management
 const versionVisible = ref(false);
 const newVersion = ref('');
 const versions = ref([]);
@@ -91,15 +83,14 @@ async function fetchData() {
   loading.value = true;
   try {
     const res = await listApp();
-    let data = res.data || res.rows || [];
-    if (search.value) data = data.filter(d => d.name && d.name.includes(search.value));
-    tableData.value = data;
+    tableData.value = res.data || res.rows || [];
   } finally { loading.value = false; }
 }
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { name: '', description: '', status: 'active' });
+  form.name = '';
+  form.description = '';
   dialogVisible.value = true;
 }
 
@@ -108,8 +99,12 @@ async function openEdit(row) {
   try {
     const res = await getApp(row.id);
     const d = res.data || row;
-    Object.assign(form, d);
-  } catch { Object.assign(form, row); }
+    form.name = d.name || '';
+    form.description = d.description || '';
+  } catch {
+    form.name = row.name || '';
+    form.description = row.description || '';
+  }
   dialogVisible.value = true;
 }
 
@@ -126,10 +121,10 @@ async function handleSubmit() {
   submitting.value = true;
   try {
     if (editingId.value) {
-      await updateApp(editingId.value, form);
+      await updateApp(editingId.value, { name: form.name, description: form.description });
       ElMessage.success('更新成功');
     } else {
-      await addApp(form);
+      await addApp({ name: form.name, description: form.description });
       ElMessage.success('新增成功');
     }
     dialogVisible.value = false;

@@ -8,3 +8,6 @@ export function addVenue(data) { return request({ url: '/api/admin/venues', meth
 export function updateVenue(id, data) { return request({ url: `/api/admin/venues/${id}`, method: 'put', data }); }
 export function delVenue(id) { return request({ url: `/api/admin/venues/${id}`, method: 'delete' }); }
 export function regenToken(id) { return request({ url: `/api/admin/venues/${id}/regenerate-token`, method: 'post' }); }
+
+// Tenant-specific
+export function listTenantVenues() { return request({ url: '/api/tenant/venues', method: 'get' }); }
