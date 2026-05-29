@@ -27,6 +27,7 @@ public class TenantUserController extends BaseController {
     @PreAuthorize("@ss.hasRole('tenant')")
     public List<Venue> venues() {
         Long tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return List.of();
         List<Venue> list = venueMapper.selectVenueList(tenantId);
         return list != null ? list : List.of();
     }
@@ -35,6 +36,7 @@ public class TenantUserController extends BaseController {
     @PreAuthorize("@ss.hasRole('tenant')")
     public List<License> licenses() {
         Long tenantId = TenantContext.getCurrentTenantId();
+        if (tenantId == null) return List.of();
         List<License> list = licenseMapper.selectLicenseList(tenantId);
         return list != null ? list : List.of();
     }

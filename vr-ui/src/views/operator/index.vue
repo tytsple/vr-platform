@@ -34,32 +34,22 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { OfficeBuilding, Location, VideoCamera, Monitor } from '@element-plus/icons-vue';
-import { getSessions } from '@/api/vr/stats';
-import { listTenant } from '@/api/vr/tenant';
-import { listVenue } from '@/api/vr/venue';
-import { listApp } from '@/api/vr/application';
+import { Monitor } from '@element-plus/icons-vue';
+import { getActiveSessions } from '@/api/vr/stats';
 
 const loading = ref(false);
 const sessions = ref([]);
 
 const stats = ref([
-  { label: '租户', value: 0, icon: OfficeBuilding, color: '#409EFF' },
-  { label: '场地', value: 0, icon: Location, color: '#67C23A' },
-  { label: '应用', value: 0, icon: VideoCamera, color: '#E6A23C' },
   { label: '活跃会话', value: 0, icon: Monitor, color: '#F56C6C' },
 ]);
 
 onMounted(async () => {
-  try { const r = await listTenant(); stats.value[0].value = (r.data || r.rows || []).length; } catch {}
-  try { const r = await listVenue(); stats.value[1].value = (r.data || r.rows || []).length; } catch {}
-  try { const r = await listApp(); stats.value[2].value = (r.data || r.rows || []).length; } catch {}
-
   loading.value = true;
   try {
-    const res = await getSessions({ status: 'active' });
+    const res = await getActiveSessions();
     sessions.value = res.data || res.rows || [];
-    stats.value[3].value = sessions.value.length;
+    stats.value[0].value = sessions.value.length;
   } finally { loading.value = false; }
 });
 </script>

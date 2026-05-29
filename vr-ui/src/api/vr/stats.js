@@ -6,3 +6,6 @@ export function getSessions(params) { return request({ url: '/api/admin/sessions
 // Tenant-specific
 export function getTenantStats() { return request({ url: '/api/tenant/stats', method: 'get' }); }
 export function getTenantSessions() { return request({ url: '/api/tenant/sessions', method: 'get' }); }
+
+// Operator-specific
+export function getActiveSessions() { return request({ url: '/api/operator/sessions/active', method: 'get' }); }
