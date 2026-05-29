@@ -20,6 +20,7 @@
 import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
+import { useTagsViewStore } from '@/store/modules/tagsView';
 import { Fold } from '@element-plus/icons-vue';
 
 defineEmits(['toggle']);
@@ -27,6 +28,7 @@ defineEmits(['toggle']);
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+const tagsStore = useTagsViewStore();
 
 const homePath = computed(() => {
   const roles = userStore.user?.roles || [];
@@ -46,6 +48,7 @@ const breadcrumbs = computed(() => {
 
 function logout() {
   userStore.logout();
+  tagsStore.closeAllViews();
   router.push('/login');
 }
 </script>
