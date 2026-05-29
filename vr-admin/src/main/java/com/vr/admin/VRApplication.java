@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.vr")
-@MapperScan("com.vr")
+@MapperScan({"com.vr.system.mapper", "com.vr.vr.mapper"})
 @EnableScheduling
 public class VRApplication {
     public static void main(String[] args) {
