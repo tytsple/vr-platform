@@ -24,8 +24,8 @@ const route = useRoute();
 
 const menuRoutes = computed(() => {
   const matched = route.matched;
-  if (matched.length > 0) {
-    return matched[0]?.children?.filter(r => !r.meta?.hidden) || [];
+  if (matched.length > 0 && matched[0]) {
+    return [matched[0]];
   }
   return [];
 });
