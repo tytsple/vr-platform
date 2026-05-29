@@ -17,15 +17,11 @@
     <el-card style="margin-top:16px">
       <template #header>活跃会话</template>
       <el-table :data="sessions" stripe v-loading="loading">
-        <el-table-column prop="venue_name" label="场地" />
-        <el-table-column prop="app_name" label="应用" />
-        <el-table-column prop="tenant_name" label="租户" />
-        <el-table-column prop="started_at" label="开始时间" width="180" />
-        <el-table-column prop="duration" label="时长(分钟)" width="120">
-          <template #default="{ row }">
-            {{ row.duration ? (row.duration / 60).toFixed(1) : '-' }}
-          </template>
-        </el-table-column>
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="venueId" label="场地ID" width="100" />
+        <el-table-column prop="applicationId" label="应用ID" width="100" />
+        <el-table-column prop="version" label="版本" width="100" />
+        <el-table-column prop="startedAt" label="开始时间" width="180" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 'active' ? 'success' : 'info'">{{ row.status }}</el-tag>

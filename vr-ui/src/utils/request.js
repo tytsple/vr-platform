@@ -16,12 +16,12 @@ service.interceptors.request.use(config => {
   return config;
 }, error => Promise.reject(error));
 
-// Response interceptor — unified error handling
+// Response interceptor — unified error handling + normalization
 service.interceptors.response.use(
   response => {
     const data = response.data;
     // RuoYi AjaxResult format
-    if (data && data.code !== undefined) {
+    if (data && typeof data === 'object' && !Array.isArray(data) && data.code !== undefined) {
       if (data.code === 401) {
         removeToken();
         window.location.href = '/login';
@@ -31,8 +31,11 @@ service.interceptors.response.use(
         ElMessage.error(data.msg || '请求失败');
         return Promise.reject(new Error(data.msg));
       }
+      // Return wrapped data so callers always use res.data
+      return data;
     }
-    return data;
+    // Return raw response as-is (list endpoints return arrays directly via Spring MVC)
+    return response;
   },
   error => {
     ElMessage.error(error.message || '网络错误');

@@ -35,6 +35,18 @@
         <el-form-item label="昵称">
           <el-input v-model="form.nickName" />
         </el-form-item>
+        <el-form-item label="角色" prop="roleKey">
+          <el-select v-model="form.roleKey" style="width:100%">
+            <el-option label="管理员" value="admin" />
+            <el-option label="租户用户" value="tenant" />
+            <el-option label="运维人员" value="operator" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="所属租户" v-if="form.roleKey === 'tenant'">
+          <el-select v-model="form.tenantId" style="width:100%" placeholder="请选择" clearable>
+            <el-option v-for="t in tenants" :key="t.id" :label="t.name" :value="t.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="form.status" style="width:100%">
             <el-option label="正常" value="0" />
@@ -54,18 +66,21 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { listUser, getUser, addUser, updateUser, delUser } from '@/api/system/user';
+import { listTenant } from '@/api/vr/tenant';
 
 const search = ref('');
 const loading = ref(false);
 const tableData = ref([]);
+const tenants = ref([]);
 const dialogVisible = ref(false);
 const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ userName: '', password: '', nickName: '', status: '0' });
+const form = reactive({ userName: '', password: '', nickName: '', roleKey: 'tenant', tenantId: '', status: '0' });
 const rules = {
   userName: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  roleKey: [{ required: true, message: '请选择角色', trigger: 'change' }],
 };
 const dialogTitle = computed(() => editingId.value ? '编辑用户' : '新增用户');
 const filteredData = computed(() => {
@@ -81,9 +96,14 @@ async function fetchData() {
   } finally { loading.value = false; }
 }
 
+async function loadTenants() {
+  try { const r = await listTenant(); tenants.value = r.data || r.rows || []; } catch {}
+}
+
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { userName: '', password: '', nickName: '', status: '0' });
+  Object.assign(form, { userName: '', password: '', nickName: '', roleKey: 'tenant', tenantId: '', status: '0' });
+  if (formRef.value) formRef.value.resetFields();
   dialogVisible.value = true;
 }
 
@@ -91,14 +111,19 @@ async function openEdit(row) {
   editingId.value = row.userId || row.id;
   try {
     const res = await getUser(row.userId || row.id);
-    const d = res.data || row;
-    form.userName = d.userName || '';
-    form.nickName = d.nickName || '';
-    form.status = d.status || '0';
+    const data = res.data || {};
+    const u = data.user || data;
+    form.userName = u.userName || '';
+    form.nickName = u.nickName || '';
+    form.roleKey = (data.roles && data.roles.length > 0) ? data.roles[0] : '';
+    form.tenantId = data.tenantId || '';
+    form.status = u.status || '0';
     form.password = '';
   } catch {
     form.userName = row.userName || '';
     form.nickName = row.nickName || '';
+    form.roleKey = '';
+    form.tenantId = '';
     form.status = row.status || '0';
     form.password = '';
   }
@@ -117,7 +142,13 @@ async function handleSubmit() {
   if (!valid) return;
   submitting.value = true;
   try {
-    const payload = { userName: form.userName, nickName: form.nickName, status: form.status };
+    const payload = {
+      userName: form.userName,
+      nickName: form.nickName,
+      roleKey: form.roleKey,
+      status: form.status,
+    };
+    payload.tenantId = form.tenantId || null;
     if (form.password) payload.password = form.password;
     if (editingId.value) {
       await updateUser(editingId.value, payload);
@@ -133,7 +164,7 @@ async function handleSubmit() {
 
 function resetForm() { formRef.value?.resetFields(); }
 
-onMounted(fetchData);
+onMounted(() => { fetchData(); loadTenants(); });
 </script>
 
 <style scoped>

@@ -24,6 +24,9 @@ public class SysUserService {
     public Long selectTenantIdByUserId(Long userId) { return userMapper.selectTenantIdByUserId(userId); }
 
     public int insertUser(SysUser user) {
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userMapper.insertUser(user);
     }
