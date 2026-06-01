@@ -1,0 +1,1 @@
+ALTER TABLE sys_user ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 0;

@@ -34,12 +34,13 @@ public class TokenService {
         return key;
     }
 
-    public String createToken(LoginUser loginUser) {
+    public String createToken(LoginUser loginUser, int tokenVersion) {
         return Jwts.builder()
             .claim("user_id", loginUser.getUserId())
             .claim("username", loginUser.getUsername())
             .claim("roles", loginUser.getRoles())
             .claim("tenant_id", loginUser.getTenantId())
+            .claim("token_version", tokenVersion)
             .setSubject(loginUser.getUsername())
             .setIssuedAt(new Date())
             .setExpiration(new Date(System.currentTimeMillis() + expiration))

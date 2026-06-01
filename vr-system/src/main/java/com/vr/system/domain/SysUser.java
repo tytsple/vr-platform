@@ -13,5 +13,6 @@ public class SysUser {
     private String password;
     private String status;
     private String delFlag;
+    private Integer tokenVersion;
     private LocalDateTime createTime;
 }

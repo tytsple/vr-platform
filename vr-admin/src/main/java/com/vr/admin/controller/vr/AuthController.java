@@ -7,6 +7,7 @@ import com.vr.framework.security.context.LoginUser;
 import com.vr.system.domain.SysOperLog;
 import com.vr.system.domain.SysUser;
 import com.vr.system.mapper.SysOperLogMapper;
+import com.vr.system.mapper.SysUserMapper;
 import com.vr.system.service.SysUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ public class AuthController {
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private PermissionService permissionService;
     @Autowired private SysOperLogMapper operLogMapper;
+    @Autowired private SysUserMapper sysUserMapper;
     @Autowired private HttpServletRequest request;
 
     private final ConcurrentHashMap<String, long[]> loginAttempts = new ConcurrentHashMap<>();
@@ -66,9 +68,11 @@ public class AuthController {
             return AjaxResult.error(403, "账户未分配角色，请联系管理员");
         }
         Long tenantId = userService.selectTenantIdByUserId(user.getUserId());
+        sysUserMapper.incrementTokenVersion(user.getUserId());
+        Integer version = sysUserMapper.selectTokenVersion(user.getUserId());
         logLogin(username, true, null);
         LoginUser loginUser = new LoginUser(user.getUserId(), user.getUserName(), roles, tenantId);
-        String token = tokenService.createToken(loginUser);
+        String token = tokenService.createToken(loginUser, version != null ? version : 1);
         return AjaxResult.success(Map.of("token", token));
     }
 

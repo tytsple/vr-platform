@@ -3,6 +3,7 @@ package com.vr.framework.security.filter;
 import com.vr.framework.security.TenantContext;
 import com.vr.framework.security.TokenService;
 import com.vr.framework.security.context.LoginUser;
+import com.vr.system.mapper.SysUserMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +25,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private TokenService tokenService;
+    @Autowired
+    private SysUserMapper sysUserMapper;
 
     @Override
     @SuppressWarnings("unchecked")
@@ -37,6 +40,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long tenantId = claims.get("tenant_id") != null ?
                     ((Number) claims.get("tenant_id")).longValue() : null;
                 Long userId = ((Number) claims.get("user_id")).longValue();
+                // 校验 token_version: 新登录使旧 token 失效
+                Integer dbVersion = sysUserMapper.selectTokenVersion(userId);
+                Number tokenVersion = (Number) claims.get("token_version");
+                if (dbVersion != null && tokenVersion != null && dbVersion.intValue() != tokenVersion.intValue()) {
+                    response.setContentType("application/json");
+                    response.setStatus(401);
+                    response.getWriter().write("{\"error\":\"已在其他设备登录\"}");
+                    return;
+                }
                 LoginUser user = new LoginUser(userId, (String) claims.get("username"), roles, tenantId);
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 if (roles != null) {

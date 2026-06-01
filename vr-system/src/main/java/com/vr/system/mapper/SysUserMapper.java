@@ -46,4 +46,10 @@ public interface SysUserMapper {
 
     @Delete("DELETE FROM sys_user_tenant WHERE user_id = #{userId}")
     int deleteUserTenant(Long userId);
+
+    @Update("UPDATE sys_user SET token_version = token_version + 1 WHERE user_id = #{userId}")
+    int incrementTokenVersion(Long userId);
+
+    @Select("SELECT token_version FROM sys_user WHERE user_id = #{userId}")
+    Integer selectTokenVersion(Long userId);
 }
