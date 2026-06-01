@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -43,10 +44,12 @@ public class TenantUserController extends BaseController {
 
     @GetMapping("/stats")
     @PreAuthorize("@ss.hasRole('tenant')")
-    public List<TenantStats> stats() {
+    public List<TenantStats> stats(
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to) {
         Long tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null) {
-            return sessionMapper.selectSessionStatsByTenantId(tenantId);
+            return sessionMapper.selectSessionStatsByTenantId(tenantId, from, to);
         }
         return List.of();
     }

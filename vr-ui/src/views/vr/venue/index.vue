@@ -132,8 +132,16 @@ async function handleSubmit() {
       await updateVenue(editingId.value, { name: form.name, address: form.address, tenantId: form.tenantId });
       ElMessage.success('更新成功');
     } else {
-      await addVenue({ name: form.name, address: form.address, tenantId: form.tenantId });
-      ElMessage.success('新增成功');
+      const res = await addVenue({ name: form.name, address: form.address, tenantId: form.tenantId });
+      const token = res.data?.controllerToken || res.data?.controller_token;
+      if (token) {
+        ElMessageBox.alert(token, '场地创建成功！请复制控制器 Token', {
+          confirmButtonText: '已复制',
+          type: 'success',
+        });
+      } else {
+        ElMessage.success('新增成功');
+      }
     }
     dialogVisible.value = false;
     fetchData();

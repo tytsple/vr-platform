@@ -47,6 +47,7 @@ public class VenueController extends BaseController {
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "场地管理", businessType = BusinessType.INSERT)
     public ResponseEntity<Venue> create(@RequestBody Venue venue) {
+        venue.setControllerToken(generateToken());
         venueMapper.insertVenue(venue);
         return ResponseEntity.status(201).body(venue);
     }

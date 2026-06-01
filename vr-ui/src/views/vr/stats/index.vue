@@ -25,7 +25,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getStats } from '@/api/vr/stats';
+import { getFilteredStats } from '@/api/vr/stats';
 
 const dateRange = ref([]);
 const loading = ref(false);
@@ -34,7 +34,9 @@ const tableData = ref([]);
 async function fetchData() {
   loading.value = true;
   try {
-    const res = await getStats();
+    const from = dateRange.value?.[0] || null;
+    const to = dateRange.value?.[1] || null;
+    const res = await getFilteredStats(from, to ? to + ' 23:59:59' : null);
     tableData.value = res.data || res.rows || [];
   } finally { loading.value = false; }
 }

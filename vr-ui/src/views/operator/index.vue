@@ -15,6 +15,21 @@
     </el-row>
 
     <el-card style="margin-top:16px">
+      <template #header>场地连接状态</template>
+      <el-table :data="venues" stripe v-loading="venueLoading">
+        <el-table-column prop="venueId" label="场地ID" width="100" />
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="address" label="地址" />
+        <el-table-column prop="online" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.online ? 'success' : 'danger'">{{ row.online ? '在线' : '离线' }}</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-if="!venueLoading && venues.length === 0" description="暂无场地连接" />
+    </el-card>
+
+    <el-card style="margin-top:16px">
       <template #header>活跃会话</template>
       <el-table :data="sessions" stripe v-loading="loading">
         <el-table-column prop="id" label="ID" width="80" />
@@ -34,22 +49,32 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Monitor } from '@element-plus/icons-vue';
-import { getActiveSessions } from '@/api/vr/stats';
+import { Location, Monitor } from '@element-plus/icons-vue';
+import { getActiveSessions, getVenuesStatus } from '@/api/vr/stats';
 
 const loading = ref(false);
+const venueLoading = ref(false);
 const sessions = ref([]);
+const venues = ref([]);
 
 const stats = ref([
+  { label: '在线场地', value: 0, icon: Location, color: '#67C23A' },
   { label: '活跃会话', value: 0, icon: Monitor, color: '#F56C6C' },
 ]);
 
 onMounted(async () => {
+  venueLoading.value = true;
+  try {
+    const res = await getVenuesStatus();
+    venues.value = res.data || res.rows || [];
+    stats.value[0].value = venues.value.length;
+  } finally { venueLoading.value = false; }
+
   loading.value = true;
   try {
     const res = await getActiveSessions();
     sessions.value = res.data || res.rows || [];
-    stats.value[0].value = sessions.value.length;
+    stats.value[1].value = sessions.value.length;
   } finally { loading.value = false; }
 });
 </script>

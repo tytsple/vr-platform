@@ -19,7 +19,7 @@ public interface VenueMapper {
     @Select("SELECT id, tenant_id, name, address, controller_token, created_at FROM venues WHERE controller_token=#{token}")
     Venue selectVenueByToken(String token);
 
-    @Insert("INSERT INTO venues (tenant_id, name, address) VALUES (#{tenantId}, #{name}, #{address})")
+    @Insert("INSERT INTO venues (tenant_id, name, address, controller_token) VALUES (#{tenantId}, #{name}, #{address}, #{controllerToken})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertVenue(Venue venue);
 

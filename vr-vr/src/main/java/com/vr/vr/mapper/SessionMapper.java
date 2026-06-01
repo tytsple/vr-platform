@@ -42,18 +42,25 @@ public interface SessionMapper {
                                     @Param("from") LocalDateTime from, @Param("to") LocalDateTime to,
                                     @Param("status") String status, @Param("limit") int limit);
 
-    @Select({"SELECT v.tenant_id AS tenant_id, s.application_id AS application_id, COUNT(*) AS count, ",
+    @Select({"<script>",
+        "SELECT v.tenant_id AS tenant_id, s.application_id AS application_id, COUNT(*) AS count, ",
         "COALESCE(SUM(EXTRACT(EPOCH FROM (s.ended_at - s.started_at))/60), 0) AS duration_minutes ",
         "FROM sessions s JOIN venues v ON s.venue_id = v.id ",
-        "WHERE s.status IN ('normal','abnormal') GROUP BY v.tenant_id, s.application_id",
-        "ORDER BY v.tenant_id, s.application_id"})
-    List<TenantStats> selectSessionStats();
+        "WHERE s.status IN ('normal','abnormal')",
+        "<if test='from != null'> AND s.started_at >= #{from}</if>",
+        "<if test='to != null'> AND s.started_at &lt;= #{to}</if>",
+        "GROUP BY v.tenant_id, s.application_id",
+        "ORDER BY v.tenant_id, s.application_id</script>"})
+    List<TenantStats> selectSessionStats(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
-    @Select({"SELECT v.tenant_id AS tenant_id, s.application_id AS application_id, COUNT(*) AS count, ",
+    @Select({"<script>",
+        "SELECT v.tenant_id AS tenant_id, s.application_id AS application_id, COUNT(*) AS count, ",
         "COALESCE(SUM(EXTRACT(EPOCH FROM (s.ended_at - s.started_at))/60), 0) AS duration_minutes ",
         "FROM sessions s JOIN venues v ON s.venue_id = v.id ",
         "WHERE s.status IN ('normal','abnormal') AND v.tenant_id = #{tenantId}",
+        "<if test='from != null'> AND s.started_at >= #{from}</if>",
+        "<if test='to != null'> AND s.started_at &lt;= #{to}</if>",
         "GROUP BY v.tenant_id, s.application_id",
-        "ORDER BY v.tenant_id, s.application_id"})
-    List<TenantStats> selectSessionStatsByTenantId(Long tenantId);
+        "ORDER BY v.tenant_id, s.application_id</script>"})
+    List<TenantStats> selectSessionStatsByTenantId(@Param("tenantId") Long tenantId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }
