@@ -11,6 +11,7 @@ import com.vr.system.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -44,6 +45,7 @@ public class UserController extends BaseController {
         ));
     }
 
+    @Transactional
     @PostMapping
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "用户管理", businessType = BusinessType.INSERT)
@@ -75,6 +77,7 @@ public class UserController extends BaseController {
         return AjaxResult.success(user);
     }
 
+    @Transactional
     @PutMapping("/{id}")
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
@@ -110,6 +113,7 @@ public class UserController extends BaseController {
         return AjaxResult.success();
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)

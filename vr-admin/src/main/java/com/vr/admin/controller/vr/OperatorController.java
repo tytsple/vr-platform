@@ -24,13 +24,14 @@ public class OperatorController extends BaseController {
     @PreAuthorize("@ss.hasRole('operator')")
     public List<Map<String, Object>> venuesStatus() {
         List<Long> activeIds = messageRouter.getActiveVenues();
+        if (activeIds.isEmpty()) return List.of();
+        List<Venue> venues = venueMapper.selectVenuesByIds(activeIds);
         List<Map<String, Object>> result = new ArrayList<>();
-        for (Long venueId : activeIds) {
-            Venue venue = venueMapper.selectVenueById(venueId);
+        for (Venue venue : venues) {
             Map<String, Object> status = new HashMap<>();
-            status.put("venueId", venueId);
-            status.put("name", venue != null ? venue.getName() : "未知");
-            status.put("address", venue != null ? venue.getAddress() : "");
+            status.put("venueId", venue.getId());
+            status.put("name", venue.getName());
+            status.put("address", venue.getAddress() != null ? venue.getAddress() : "");
             status.put("online", true);
             result.add(status);
         }

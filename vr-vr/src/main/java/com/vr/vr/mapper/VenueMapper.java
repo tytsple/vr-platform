@@ -16,6 +16,11 @@ public interface VenueMapper {
     @Select("SELECT id, tenant_id, name, address, controller_token, created_at FROM venues WHERE id=#{id}")
     Venue selectVenueById(Long id);
 
+    @Select({"<script>",
+        "SELECT id, tenant_id, name, address, controller_token, created_at FROM venues",
+        "WHERE id IN <foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach></script>"})
+    List<Venue> selectVenuesByIds(@Param("ids") List<Long> ids);
+
     @Select("SELECT id, tenant_id, name, address, controller_token, created_at FROM venues WHERE controller_token=#{token}")
     Venue selectVenueByToken(String token);
 

@@ -63,7 +63,6 @@ public class TenantUserController extends BaseController {
         if (venueIds.isEmpty()) {
             return List.of();
         }
-        return sessionMapper.selectSessionList(null, null, null, null, null, 100)
-            .stream().filter(s -> venueIds.contains(s.getVenueId())).toList();
+        return sessionMapper.selectSessionsByVenueIds(venueIds, 100);
     }
 }

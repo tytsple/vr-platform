@@ -56,6 +56,12 @@ public interface SessionMapper {
                                     @Param("status") String status, @Param("limit") int limit);
 
     @Select({"<script>",
+        "SELECT id, venue_id, application_id, version, started_at, ended_at, status, created_at FROM sessions",
+        "WHERE venue_id IN <foreach collection='venueIds' item='vid' open='(' separator=',' close=')'>#{vid}</foreach>",
+        "ORDER BY started_at DESC LIMIT #{limit}</script>"})
+    List<Session> selectSessionsByVenueIds(@Param("venueIds") List<Long> venueIds, @Param("limit") int limit);
+
+    @Select({"<script>",
         "SELECT v.tenant_id AS tenant_id, s.application_id AS application_id, COUNT(*) AS count, ",
         "COALESCE(SUM(EXTRACT(EPOCH FROM (s.ended_at - s.started_at))/60), 0) AS duration_minutes ",
         "FROM sessions s JOIN venues v ON s.venue_id = v.id ",
