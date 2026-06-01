@@ -16,6 +16,9 @@ public class TokenService {
     @Value("${jwt.secret:dev-secret-change-in-production}")
     private String secret;
 
+    @Value("${jwt.expiration:86400000}")
+    private long expiration;
+
     private SecretKey getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(
             java.util.Base64.getEncoder().encodeToString(secret.getBytes()));
@@ -30,7 +33,7 @@ public class TokenService {
             .claim("tenant_id", loginUser.getTenantId())
             .setSubject(loginUser.getUsername())
             .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 86400000L))
+            .setExpiration(new Date(System.currentTimeMillis() + expiration))
             .signWith(getKey())
             .compact();
     }

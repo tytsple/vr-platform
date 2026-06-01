@@ -85,17 +85,20 @@ if [ ! -f migrations/001_init.sql ]; then
     exit 1
 fi
 
-# ---- 5. 构建并启动 ----
-log "开始构建 Docker 镜像（首次构建约需 5-10 分钟）..."
+# ---- 5. 备份提醒 ----
+if docker compose ps postgres 2>/dev/null | grep -q "Up"; then
+    warn "检测到已有数据库运行中，建议先备份: ./backup.sh"
+fi
 
+# ---- 6. 构建并启动 ----
+log "开始构建 Docker 镜像（首次构建约需 5-10 分钟）..."
 docker compose build --pull
 
-log "启动所有服务..."
-docker compose up -d
+log "启动所有服务（保留数据库数据）..."
+docker compose up -d --remove-orphans
 
-# ---- 6. 等待健康检查 ----
+# ---- 7. 等待健康检查 ----
 log "等待服务就绪..."
-
 MAX_WAIT=120
 ELAPSED=0
 while [ $ELAPSED -lt $MAX_WAIT ]; do
@@ -113,12 +116,12 @@ if [ $ELAPSED -ge $MAX_WAIT ]; then
     warn "部分服务可能未完全就绪，请检查日志: docker compose logs"
 fi
 
-# ---- 7. 首次数据库初始化 ----
+# ---- 8. 数据库初始化确认 ----
 log "等待数据库初始化完成..."
 sleep 3
 docker compose exec -T postgres psql -U vr_manager -d vr_manager -c "SELECT COUNT(*) AS table_count FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null || true
 
-# ---- 8. 汇总 ----
+# ---- 9. 汇总 ----
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 
 echo ""
@@ -133,9 +136,12 @@ echo ""
 echo "  服务状态:"
 docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Status}}" 2>/dev/null
 echo ""
-echo "  常用命令:"
+echo "  运维命令:"
+echo "    备份数据:    ./backup.sh"
+echo "    恢复数据:    ./restore.sh backups/xxx.sql"
 echo "    查看日志:    docker compose logs -f [服务名]"
-echo "    重启服务:    docker compose restart [服务名]"
-echo "    停止所有:    docker compose down"
-echo "    完全重置:    docker compose down -v && rm -f .env"
+echo "    更新部署:    ./deploy.sh"
+echo "    备份数据库:  ./backup.sh"
+echo "    恢复数据库:  ./restore.sh <备份文件>"
+echo "    ⚠ 完全重置 (删除所有数据): docker compose down -v && rm -f .env"
 echo "============================================"
