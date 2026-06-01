@@ -2,6 +2,7 @@ package com.vr.admin.controller.vr;
 
 import com.vr.common.core.controller.BaseController;
 import com.vr.vr.domain.Session;
+import com.vr.vr.domain.SessionVO;
 import com.vr.vr.domain.TenantStats;
 import com.vr.vr.mapper.SessionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +45,11 @@ public class StatsController extends BaseController {
         List<Session> list = sessionMapper.selectSessionList(
             venue_id, app_id, from, to, status, limit);
         return list != null ? list : List.of();
+    }
+
+    @GetMapping("/sessions/overview")
+    @PreAuthorize("hasAnyRole('admin','operator')")
+    public List<SessionVO> sessionsOverview(@RequestParam(defaultValue = "20") int limit) {
+        return sessionMapper.selectSessionVOList(limit);
     }
 }

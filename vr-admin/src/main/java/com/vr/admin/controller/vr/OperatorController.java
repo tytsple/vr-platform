@@ -1,7 +1,7 @@
 package com.vr.admin.controller.vr;
 
 import com.vr.common.core.controller.BaseController;
-import com.vr.vr.domain.Session;
+import com.vr.vr.domain.SessionVO;
 import com.vr.vr.domain.Venue;
 import com.vr.vr.engine.MessageRouter;
 import com.vr.vr.mapper.SessionMapper;
@@ -39,8 +39,7 @@ public class OperatorController extends BaseController {
 
     @GetMapping("/sessions/active")
     @PreAuthorize("@ss.hasRole('operator')")
-    public List<Session> activeSessions() {
-        List<Session> list = sessionMapper.selectAllActiveSessions();
-        return list != null ? list : List.of();
+    public List<SessionVO> activeSessions() {
+        return sessionMapper.selectActiveSessionVOList(100);
     }
 }

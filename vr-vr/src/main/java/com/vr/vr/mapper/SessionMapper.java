@@ -1,6 +1,7 @@
 package com.vr.vr.mapper;
 
 import com.vr.vr.domain.Session;
+import com.vr.vr.domain.SessionVO;
 import com.vr.vr.domain.TenantStats;
 import org.apache.ibatis.annotations.*;
 
@@ -9,6 +10,18 @@ import java.util.List;
 
 @Mapper
 public interface SessionMapper {
+
+    @Select({"SELECT s.id, s.venue_id, s.application_id, s.version, s.started_at, s.ended_at, s.status, s.created_at, ",
+        "v.name AS venue_name, a.name AS app_name ",
+        "FROM sessions s LEFT JOIN venues v ON s.venue_id = v.id LEFT JOIN applications a ON s.application_id = a.id ",
+        "ORDER BY s.started_at DESC LIMIT #{limit}"})
+    List<SessionVO> selectSessionVOList(@Param("limit") int limit);
+
+    @Select({"SELECT s.id, s.venue_id, s.application_id, s.version, s.started_at, s.ended_at, s.status, s.created_at, ",
+        "v.name AS venue_name, a.name AS app_name ",
+        "FROM sessions s LEFT JOIN venues v ON s.venue_id = v.id LEFT JOIN applications a ON s.application_id = a.id ",
+        "WHERE s.status='active' ORDER BY s.started_at DESC LIMIT #{limit}"})
+    List<SessionVO> selectActiveSessionVOList(@Param("limit") int limit);
     @Insert("INSERT INTO sessions (venue_id, application_id, version, started_at, status) VALUES (#{venueId}, #{applicationId}, #{version}, #{startedAt}, #{status})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insertSession(Session session);

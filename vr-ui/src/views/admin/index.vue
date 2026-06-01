@@ -18,8 +18,8 @@
       <template #header>最近会话记录</template>
       <el-table :data="sessions" stripe size="small" v-loading="sessionLoading">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="venueId" label="场地ID" width="100" />
-        <el-table-column prop="applicationId" label="应用ID" width="100" />
+        <el-table-column prop="venueName" label="场地" />
+        <el-table-column prop="appName" label="应用" />
         <el-table-column prop="version" label="版本" width="100" />
         <el-table-column prop="startedAt" label="开始时间" width="180" />
         <el-table-column prop="endedAt" label="结束时间" width="180" />
@@ -36,7 +36,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { OfficeBuilding, Location, VideoCamera, Key } from '@element-plus/icons-vue';
-import { getSessions } from '@/api/vr/stats';
+import request from '@/utils/request';
 import { listTenant } from '@/api/vr/tenant';
 import { listVenue } from '@/api/vr/venue';
 import { listApp } from '@/api/vr/application';
@@ -66,7 +66,7 @@ onMounted(async () => {
 
   sessionLoading.value = true;
   try {
-    const s = await getSessions({ limit: 10 });
+    const s = await request({ url: '/api/admin/sessions/overview', method: 'get', params: { limit: 20 } });
     sessions.value = s.data || s.rows || [];
   } finally { sessionLoading.value = false; }
 });
