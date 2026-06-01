@@ -22,6 +22,7 @@ RUN mvn package -DskipTests -B -q -s /root/.m2/settings.xml
 
 # Runtime image
 FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl
 COPY --from=build /build/vr-admin/target/vr-admin-*.jar /app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app.jar"]

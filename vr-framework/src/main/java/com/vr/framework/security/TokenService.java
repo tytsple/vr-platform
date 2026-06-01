@@ -2,27 +2,36 @@ package com.vr.framework.security;
 
 import com.vr.framework.security.context.LoginUser;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class TokenService {
 
-    @Value("${jwt.secret:dev-secret-change-in-production}")
+    @Value("${jwt.secret}")
     private String secret;
 
     @Value("${jwt.expiration:86400000}")
     private long expiration;
 
+    private SecretKey key;
+
+    @PostConstruct
+    void init() {
+        if (secret == null || secret.length() < 32) {
+            throw new IllegalStateException("JWT_SECRET 未设置或长度不足（至少32字符）");
+        }
+        key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
     private SecretKey getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(
-            java.util.Base64.getEncoder().encodeToString(secret.getBytes()));
-        return Keys.hmacShaKeyFor(keyBytes);
+        return key;
     }
 
     public String createToken(LoginUser loginUser) {
