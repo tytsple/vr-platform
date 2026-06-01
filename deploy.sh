@@ -87,6 +87,7 @@ fi
 
 # ---- 5. 数据目录 ----
 mkdir -p ./data/postgres
+sudo chown 70:70 ./data/postgres 2>/dev/null || chown 70:70 ./data/postgres 2>/dev/null || true
 log "数据目录: ./data/postgres (宿主机目录，不受 docker compose down -v 影响)"
 
 # ---- 6. 备份提醒 ----
