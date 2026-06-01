@@ -21,6 +21,7 @@ Thumbs.db
 
 # Docker
 .env
+data/
 
 # Logs
 *.log

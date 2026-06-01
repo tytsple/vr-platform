@@ -85,19 +85,23 @@ if [ ! -f migrations/001_init.sql ]; then
     exit 1
 fi
 
-# ---- 5. 备份提醒 ----
+# ---- 5. 数据目录 ----
+mkdir -p ./data/postgres
+log "数据目录: ./data/postgres (宿主机目录，不受 docker compose down -v 影响)"
+
+# ---- 6. 备份提醒 ----
 if docker compose ps postgres 2>/dev/null | grep -q "Up"; then
     warn "检测到已有数据库运行中，建议先备份: ./backup.sh"
 fi
 
-# ---- 6. 构建并启动 ----
+# ---- 7. 构建并启动 ----
 log "开始构建 Docker 镜像（首次构建约需 5-10 分钟）..."
 docker compose build --pull
 
 log "启动所有服务（保留数据库数据）..."
 docker compose up -d --remove-orphans
 
-# ---- 7. 等待健康检查 ----
+# ---- 8. 等待健康检查 ----
 log "等待服务就绪..."
 MAX_WAIT=120
 ELAPSED=0
@@ -116,12 +120,12 @@ if [ $ELAPSED -ge $MAX_WAIT ]; then
     warn "部分服务可能未完全就绪，请检查日志: docker compose logs"
 fi
 
-# ---- 8. 数据库初始化确认 ----
+# ---- 9. 数据库初始化确认 ----
 log "等待数据库初始化完成..."
 sleep 3
 docker compose exec -T postgres psql -U vr_manager -d vr_manager -c "SELECT COUNT(*) AS table_count FROM information_schema.tables WHERE table_schema='public';" 2>/dev/null || true
 
-# ---- 9. 汇总 ----
+# ---- 10. 汇总 ----
 SERVER_IP=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "localhost")
 
 echo ""
