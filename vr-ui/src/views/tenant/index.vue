@@ -87,7 +87,7 @@ onMounted(async () => {
     const res = await getTenantStats();
     const rows = res.data || res.rows || [];
     stats.value[3].value = rows.reduce((sum, r) => sum + (r.count || 0), 0);
-  } catch {}
+  } catch { console.warn('加载租户统计数据失败'); }
 });
 </script>
 

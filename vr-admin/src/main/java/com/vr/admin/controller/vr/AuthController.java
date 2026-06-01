@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,10 +29,28 @@ public class AuthController {
     @Autowired private SysOperLogMapper operLogMapper;
     @Autowired private HttpServletRequest request;
 
+    private final ConcurrentHashMap<String, long[]> loginAttempts = new ConcurrentHashMap<>();
+
+    private boolean isRateLimited(String key) {
+        long now = System.currentTimeMillis();
+        long[] entry = loginAttempts.computeIfAbsent(key, k -> new long[]{0, now});
+        synchronized (entry) {
+            if (now - entry[1] > 60000) { entry[0] = 1; entry[1] = now; return false; }
+            entry[0]++;
+            if (entry[0] > 5) return true;
+            return false;
+        }
+    }
+
     @PostMapping("/login")
     public AjaxResult login(@RequestBody Map<String, String> body) {
         String username = body.get("username");
         String password = body.get("password");
+        String clientIp = request.getRemoteAddr();
+
+        if (isRateLimited(clientIp)) {
+            return AjaxResult.error(429, "请求过于频繁，请稍后再试");
+        }
         SysUser user = userService.selectUserByUserName(username);
         if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
             logLogin(username, false, "bad credentials");

@@ -16,9 +16,11 @@ public class VrControllerClient : IDisposable
     private ClientWebSocket? _ws;
     private CancellationTokenSource? _cts;
     private long _sessionId;
+    private bool _autoReconnect = true;
 
     private static readonly TimeSpan HeartbeatInterval = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan ReconnectDelay = TimeSpan.FromSeconds(5);
+    private static readonly int MaxReconnectAttempts = 10;
 
     // ==================== 事件 ====================
 
@@ -81,6 +83,7 @@ public class VrControllerClient : IDisposable
     /// <summary>断开连接。</summary>
     public async Task DisconnectAsync()
     {
+        _autoReconnect = false;
         _cts?.Cancel();
         if (_ws?.State == WebSocketState.Open)
         {
@@ -88,6 +91,40 @@ public class VrControllerClient : IDisposable
             catch { /* 忽略关闭时的错误 */ }
         }
         SetState(ConnectionState.Disconnected);
+    }
+
+    private async Task ReconnectLoop()
+    {
+        int attempts = 0;
+        while (_autoReconnect && !_cts!.Token.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(ReconnectDelay, _cts.Token);
+                attempts++;
+                SetState(ConnectionState.Connecting);
+                _ws?.Dispose();
+                _ws = new ClientWebSocket();
+                var uri = new Uri($"{_serverUrl}/ws?token={_token}");
+                await _ws.ConnectAsync(uri, _cts.Token);
+                SetState(ConnectionState.Connected);
+                OnConnected?.Invoke();
+                _ = Task.Run(() => HeartbeatLoop(_cts.Token));
+                _ = Task.Run(() => ReceiveLoop(_cts.Token));
+                return;
+            }
+            catch (OperationCanceledException) { break; }
+            catch (Exception ex)
+            {
+                OnError?.Invoke(new Exception($"重连失败 ({attempts}/{MaxReconnectAttempts})", ex));
+                if (attempts >= MaxReconnectAttempts)
+                {
+                    OnDisconnected?.Invoke($"已达最大重连次数 ({MaxReconnectAttempts})");
+                    SetState(ConnectionState.Disconnected);
+                    break;
+                }
+            }
+        }
     }
 
     // ==================== 业务方法 ====================
@@ -188,6 +225,7 @@ public class VrControllerClient : IDisposable
                 {
                     SetState(ConnectionState.Disconnected);
                     OnDisconnected?.Invoke("服务端关闭连接");
+                    if (_autoReconnect) _ = Task.Run(() => ReconnectLoop());
                     break;
                 }
 
@@ -216,6 +254,7 @@ public class VrControllerClient : IDisposable
             {
                 SetState(ConnectionState.Disconnected);
                 OnDisconnected?.Invoke("WebSocket 连接异常断开");
+                if (_autoReconnect) _ = Task.Run(() => ReconnectLoop());
                 break;
             }
             catch (Exception ex)

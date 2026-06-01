@@ -97,7 +97,7 @@ async function fetchData() {
 }
 
 async function loadTenants() {
-  try { const r = await listTenant(); tenants.value = r.data || r.rows || []; } catch {}
+  try { const r = await listTenant(); tenants.value = r.data || r.rows || []; } catch { console.warn('加载租户列表失败'); }
 }
 
 function openAdd() {

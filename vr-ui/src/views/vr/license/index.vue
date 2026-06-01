@@ -106,13 +106,13 @@ async function loadRefs() {
     const list = r.data || r.rows || [];
     tenants.value = list;
     list.forEach(t => { tenantMap.value[t.id] = t.name; });
-  } catch {}
+  } catch { console.warn('加载租户列表失败'); }
   try {
     const r = await listApp();
     const list = r.data || r.rows || [];
     apps.value = list;
     list.forEach(a => { appMap.value[a.id] = a.name; });
-  } catch {}
+  } catch { console.warn('加载应用列表失败'); }
 }
 
 function openAdd() {

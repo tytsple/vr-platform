@@ -3,7 +3,9 @@ package com.vr.admin.controller.vr;
 import com.vr.common.annotation.Log;
 import com.vr.common.core.controller.BaseController;
 import com.vr.common.enums.BusinessType;
+import com.vr.common.exception.ServiceException;
 import com.vr.vr.domain.Venue;
+import com.vr.vr.mapper.SessionMapper;
 import com.vr.vr.mapper.VenueMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class VenueController extends BaseController {
 
     @Autowired private VenueMapper venueMapper;
+    @Autowired private SessionMapper sessionMapper;
 
     private final SecureRandom rng = new SecureRandom();
 
@@ -63,6 +66,10 @@ public class VenueController extends BaseController {
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "场地管理", businessType = BusinessType.DELETE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        int activeCount = sessionMapper.selectActiveSessionsByVenueId(id).size();
+        if (activeCount > 0) {
+            throw new ServiceException(409, "该场地有 " + activeCount + " 个活跃会话，请先结束会话再删除");
+        }
         venueMapper.deleteVenueById(id);
         return ResponseEntity.noContent().build();
     }
