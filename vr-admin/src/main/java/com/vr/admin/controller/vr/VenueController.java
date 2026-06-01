@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.vr.common.core.page.TableDataInfo;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 import java.util.List;
@@ -31,10 +32,11 @@ public class VenueController extends BaseController {
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
-    public List<Venue> list(@RequestParam(required = false) Long tenant_id) {
+    public TableDataInfo list(@RequestParam(required = false) Long tenant_id) {
+        startPage();
         List<Venue> list = venueMapper.selectVenueList(
             tenant_id != null ? tenant_id : 0);
-        return list != null ? list : List.of();
+        return getDataTable(list);
     }
 
     @GetMapping("/{id}")

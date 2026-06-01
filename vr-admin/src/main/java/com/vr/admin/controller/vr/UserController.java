@@ -3,6 +3,7 @@ package com.vr.admin.controller.vr;
 import com.vr.common.annotation.Log;
 import com.vr.common.core.controller.BaseController;
 import com.vr.common.core.domain.AjaxResult;
+import com.vr.common.core.page.TableDataInfo;
 import com.vr.common.enums.BusinessType;
 import com.vr.system.domain.SysUser;
 import com.vr.system.mapper.SysUserMapper;
@@ -24,9 +25,10 @@ public class UserController extends BaseController {
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
-    public List<SysUser> list() {
+    public TableDataInfo list() {
+        startPage();
         List<SysUser> list = userService.selectUserList();
-        return list != null ? list : List.of();
+        return getDataTable(list);
     }
 
     @GetMapping("/{id}")

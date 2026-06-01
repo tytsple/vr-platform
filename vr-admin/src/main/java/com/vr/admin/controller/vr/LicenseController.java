@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.vr.common.core.page.TableDataInfo;
 import java.util.List;
 
 @RestController
@@ -20,10 +21,11 @@ public class LicenseController extends BaseController {
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
-    public List<License> list(@RequestParam(required = false) Long tenant_id) {
+    public TableDataInfo list(@RequestParam(required = false) Long tenant_id) {
+        startPage();
         List<License> list = licenseMapper.selectLicenseList(
             tenant_id != null ? tenant_id : 0);
-        return list != null ? list : List.of();
+        return getDataTable(list);
     }
 
     @GetMapping("/{id}")
