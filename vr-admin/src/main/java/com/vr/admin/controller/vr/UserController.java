@@ -57,8 +57,13 @@ public class UserController extends BaseController {
         if (roleKey != null && !roleKey.isEmpty()) {
             userMapper.insertUserRole(user.getUserId(), roleKey);
         }
-        if (body.containsKey("tenantId")) {
-            Object tid = body.get("tenantId");
+        Object tid = body.get("tenantId");
+        if ("tenant".equals(roleKey)) {
+            if (!(tid instanceof Number)) {
+                return AjaxResult.error("租户用户必须选择所属租户");
+            }
+            userMapper.upsertUserTenant(user.getUserId(), ((Number) tid).longValue());
+        } else if (body.containsKey("tenantId")) {
             if (tid instanceof Number) {
                 userMapper.upsertUserTenant(user.getUserId(), ((Number) tid).longValue());
             } else {
@@ -87,8 +92,13 @@ public class UserController extends BaseController {
             userMapper.deleteUserRoles(id);
             userMapper.insertUserRole(id, roleKey);
         }
-        if (body.containsKey("tenantId")) {
-            Object tid = body.get("tenantId");
+        Object tid = body.get("tenantId");
+        if ("tenant".equals(roleKey)) {
+            if (!(tid instanceof Number)) {
+                return AjaxResult.error("租户用户必须选择所属租户");
+            }
+            userMapper.upsertUserTenant(id, ((Number) tid).longValue());
+        } else if (body.containsKey("tenantId")) {
             if (tid instanceof Number) {
                 userMapper.upsertUserTenant(id, ((Number) tid).longValue());
             } else {
