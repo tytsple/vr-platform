@@ -1,6 +1,7 @@
 package com.vr.admin.controller.vr;
 
 import com.vr.common.core.domain.AjaxResult;
+import com.vr.framework.security.PermissionService;
 import com.vr.framework.security.TokenService;
 import com.vr.framework.security.context.LoginUser;
 import com.vr.system.domain.SysOperLog;
@@ -9,6 +10,7 @@ import com.vr.system.mapper.SysOperLogMapper;
 import com.vr.system.service.SysUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,7 @@ public class AuthController {
     @Autowired private SysUserService userService;
     @Autowired private TokenService tokenService;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private PermissionService permissionService;
     @Autowired private SysOperLogMapper operLogMapper;
     @Autowired private HttpServletRequest request;
 
@@ -48,6 +51,27 @@ public class AuthController {
         LoginUser loginUser = new LoginUser(user.getUserId(), user.getUserName(), roles, tenantId);
         String token = tokenService.createToken(loginUser);
         return AjaxResult.success(Map.of("token", token));
+    }
+
+    @PutMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
+    public AjaxResult changePassword(@RequestBody Map<String, String> body) {
+        LoginUser loginUser = permissionService.getLoginUser();
+        if (loginUser == null) return AjaxResult.error(401, "未登录");
+        String oldPassword = body.get("oldPassword");
+        String newPassword = body.get("newPassword");
+        if (oldPassword == null || newPassword == null || newPassword.length() < 6) {
+            return AjaxResult.error("新密码至少6位");
+        }
+        SysUser user = userService.selectUserById(loginUser.getUserId());
+        if (user == null || !passwordEncoder.matches(oldPassword, user.getPassword())) {
+            return AjaxResult.error("原密码错误");
+        }
+        SysUser update = new SysUser();
+        update.setUserId(user.getUserId());
+        update.setPassword(newPassword);
+        userService.updateUser(update);
+        return AjaxResult.success();
     }
 
     private void logLogin(String username, boolean success, String errorMsg) {

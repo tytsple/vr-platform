@@ -11,3 +11,7 @@ export function getInfo() {
 export function getRouters() {
   return request({ url: '/api/getRouters', method: 'get' });
 }
+
+export function changePassword(oldPassword, newPassword) {
+  return request({ url: '/api/auth/change-password', method: 'put', data: { oldPassword, newPassword } });
+}
