@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.vr.common.core.page.TableDataInfo;
 import java.util.List;
 import java.util.Map;
 
@@ -23,10 +22,8 @@ public class ApplicationController extends BaseController {
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
-    public TableDataInfo list() {
-        startPage();
-        List<Application> list = appMapper.selectApplicationList();
-        return getDataTable(list);
+    public List<Application> list() {
+        return appMapper.selectApplicationList();
     }
 
     @GetMapping("/{id}")

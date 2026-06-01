@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import com.vr.common.core.page.TableDataInfo;
 import java.util.List;
 
 @RestController
@@ -21,10 +20,8 @@ public class TenantController extends BaseController {
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
-    public TableDataInfo list() {
-        startPage();
-        List<Tenant> list = tenantMapper.selectTenantList();
-        return getDataTable(list);
+    public List<Tenant> list() {
+        return tenantMapper.selectTenantList();
     }
 
     @GetMapping("/{id}")
