@@ -13,8 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
 public class SystemController {
+
+    @GetMapping({"/health", "/api/health"})
+    public Map<String, Object> health() {
+        return Map.of("status", "UP");
+    }
+
+    @RequestMapping("/api")
 
     @Autowired private PermissionService permissionService;
     @Autowired private SysMenuService menuService;
