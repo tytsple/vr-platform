@@ -68,11 +68,17 @@ public class AuthController {
             return AjaxResult.error(403, "账户未分配角色，请联系管理员");
         }
         Long tenantId = userService.selectTenantIdByUserId(user.getUserId());
-        sysUserMapper.incrementTokenVersion(user.getUserId());
-        Integer version = sysUserMapper.selectTokenVersion(user.getUserId());
+        int version = 1;
+        try {
+            sysUserMapper.incrementTokenVersion(user.getUserId());
+            Integer v = sysUserMapper.selectTokenVersion(user.getUserId());
+            if (v != null) version = v;
+        } catch (Exception e) {
+            // 数据库无 token_version 列时降级，不影响登录
+        }
         logLogin(username, true, null);
         LoginUser loginUser = new LoginUser(user.getUserId(), user.getUserName(), roles, tenantId);
-        String token = tokenService.createToken(loginUser, version != null ? version : 1);
+        String token = tokenService.createToken(loginUser, version);
         return AjaxResult.success(Map.of("token", token));
     }
 

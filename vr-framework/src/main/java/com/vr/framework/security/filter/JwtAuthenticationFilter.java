@@ -40,14 +40,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Long tenantId = claims.get("tenant_id") != null ?
                     ((Number) claims.get("tenant_id")).longValue() : null;
                 Long userId = ((Number) claims.get("user_id")).longValue();
-                // 校验 token_version: 新登录使旧 token 失效
-                Integer dbVersion = sysUserMapper.selectTokenVersion(userId);
-                Number tokenVersion = (Number) claims.get("token_version");
-                if (dbVersion != null && tokenVersion != null && dbVersion.intValue() != tokenVersion.intValue()) {
-                    response.setContentType("application/json");
-                    response.setStatus(401);
-                    response.getWriter().write("{\"error\":\"已在其他设备登录\"}");
-                    return;
+                // 校验 token_version: 新登录使旧 token 失效 (数据库无此列则跳过)
+                try {
+                    Integer dbVersion = sysUserMapper.selectTokenVersion(userId);
+                    Number tokenVersion = (Number) claims.get("token_version");
+                    if (dbVersion != null && tokenVersion != null && dbVersion.intValue() != tokenVersion.intValue()) {
+                        response.setContentType("application/json");
+                        response.setStatus(401);
+                        response.getWriter().write("{\"error\":\"已在其他设备登录\"}");
+                        return;
+                    }
+                } catch (Exception ignored) {
+                    // token_version 列不存在，降级
                 }
                 LoginUser user = new LoginUser(userId, (String) claims.get("username"), roles, tenantId);
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
