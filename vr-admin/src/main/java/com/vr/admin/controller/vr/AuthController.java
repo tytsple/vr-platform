@@ -32,9 +32,15 @@ public class AuthController {
     @Autowired private HttpServletRequest request;
 
     private final ConcurrentHashMap<String, long[]> loginAttempts = new ConcurrentHashMap<>();
+    private volatile long lastCleanup = System.currentTimeMillis();
 
     private boolean isRateLimited(String key) {
         long now = System.currentTimeMillis();
+        // 定期清理过期条目
+        if (now - lastCleanup > 120000) {
+            loginAttempts.entrySet().removeIf(e -> now - e.getValue()[1] > 60000);
+            lastCleanup = now;
+        }
         long[] entry = loginAttempts.computeIfAbsent(key, k -> new long[]{0, now});
         synchronized (entry) {
             if (now - entry[1] > 60000) { entry[0] = 1; entry[1] = now; return false; }
@@ -100,6 +106,7 @@ public class AuthController {
         update.setUserId(user.getUserId());
         update.setPassword(newPassword);
         userService.updateUser(update);
+        try { sysUserMapper.incrementTokenVersion(user.getUserId()); } catch (Exception ignored) {}
         return AjaxResult.success();
     }
 

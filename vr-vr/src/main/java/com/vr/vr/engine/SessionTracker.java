@@ -57,19 +57,22 @@ public class SessionTracker implements SessionLifecycle {
     }
 
     @Override
-    public List<Long> closeStaleSessions(Long venueId) {
+    public boolean isSessionOwnedBy(Long sessionId, Long venueId) {
+        Session s = sessionMapper.selectSessionById(sessionId);
+        return s != null && s.getVenueId().equals(venueId);
+    }
+
+    @Override
+    public List<Long> closeStaleSessions(List<Long> connectedVenueIds) {
         lock.lock();
         try {
             List<Long> closedIds = new ArrayList<>();
-            List<Session> activeSessions;
-            if (venueId != null && venueId > 0) {
-                activeSessions = sessionMapper.selectActiveSessionsByVenueId(venueId);
-            } else {
-                activeSessions = sessionMapper.selectAllActiveSessions();
-            }
-
+            List<Session> activeSessions = sessionMapper.selectAllActiveSessions();
             Instant threshold = Instant.now().minus(staleTimeoutSeconds, ChronoUnit.SECONDS);
             for (Session s : activeSessions) {
+                if (connectedVenueIds != null && connectedVenueIds.contains(s.getVenueId())) {
+                    continue; // venue is connected, skip
+                }
                 if (s.getStartedAt() != null &&
                     s.getStartedAt().atZone(ZoneId.systemDefault()).toInstant().isBefore(threshold)) {
                     sessionMapper.endSession(s.getId(), "abnormal", LocalDateTime.now());

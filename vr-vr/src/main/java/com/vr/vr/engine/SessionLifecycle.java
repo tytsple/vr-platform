@@ -8,5 +8,7 @@ import java.util.List;
 public interface SessionLifecycle {
     Session startSession(Long venueId, Long appId, String version);
     void endSession(Long sessionId);
-    List<Long> closeStaleSessions(Long venueId);
+    boolean isSessionOwnedBy(Long sessionId, Long venueId);
+    /** Close sessions from venues NOT in connectedVenueIds (disconnected venues) */
+    List<Long> closeStaleSessions(List<Long> connectedVenueIds);
 }

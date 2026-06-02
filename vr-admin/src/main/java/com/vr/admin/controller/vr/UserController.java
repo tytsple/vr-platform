@@ -4,6 +4,8 @@ import com.vr.common.annotation.Log;
 import com.vr.common.core.controller.BaseController;
 import com.vr.common.core.domain.AjaxResult;
 import com.vr.common.enums.BusinessType;
+import com.vr.common.exception.ServiceException;
+import com.vr.framework.security.PermissionService;
 import com.vr.system.domain.SysUser;
 import com.vr.system.mapper.SysUserMapper;
 import com.vr.system.service.SysUserService;
@@ -22,6 +24,7 @@ public class UserController extends BaseController {
 
     @Autowired private SysUserService userService;
     @Autowired private SysUserMapper userMapper;
+    @Autowired private PermissionService permissionService;
 
     @GetMapping
     @PreAuthorize("@ss.hasRole('admin')")
@@ -115,6 +118,10 @@ public class UserController extends BaseController {
     @PreAuthorize("@ss.hasRole('admin')")
     @Log(title = "用户管理", businessType = BusinessType.DELETE)
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        if (permissionService.getLoginUser() != null
+            && permissionService.getLoginUser().getUserId().equals(id)) {
+            throw new ServiceException(400, "不能删除自己的账号");
+        }
         userMapper.deleteUserRoles(id);
         userService.deleteUserById(id);
         return ResponseEntity.noContent().build();
