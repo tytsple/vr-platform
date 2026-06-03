@@ -163,6 +163,8 @@ async function handleSubmit() {
     }
     dialogVisible.value = false;
     fetchData();
+  } catch (e) {
+    // 拦截器已显示错误提示，此处仅防止未处理 reject
   } finally { submitting.value = false; }
 }
 
