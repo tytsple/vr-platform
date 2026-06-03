@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,11 @@ public class LicenseEngine implements LicenseValidator {
     public boolean checkLicense(Long tenantId, Long appId) {
         License license = licenseMapper.selectLicenseByTenantAndApp(tenantId, appId);
         if (license == null || !Boolean.TRUE.equals(license.getGranted())) return false;
+        // 日期检查
+        LocalDate today = LocalDate.now();
+        if (license.getStartDate() != null && today.isBefore(license.getStartDate())) return false;
+        if (license.getEndDate() != null && today.isAfter(license.getEndDate())) return false;
+        // 配额检查
         String qt = license.getQuotaType();
         if (qt == null || qt.isEmpty()) return true;
         return license.getQuotaUsed() < license.getQuotaLimit();

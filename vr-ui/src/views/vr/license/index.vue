@@ -26,7 +26,9 @@
             {{ row.quotaLimit == null ? '无限制' : `${row.quotaUsed || 0}/${row.quotaLimit}` }}
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
+        <el-table-column prop="startDate" label="开始日期" width="110" />
+        <el-table-column prop="endDate" label="结束日期" width="110" />
+        <el-table-column prop="createdAt" label="创建时间" width="160" />
         <el-table-column label="操作" width="160">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -57,6 +59,12 @@
         <el-form-item label="配额上限">
           <el-input-number v-model="form.quotaLimit" :min="0" style="width:100%" />
         </el-form-item>
+        <el-form-item label="开始日期">
+          <el-date-picker v-model="form.startDate" type="date" value-format="YYYY-MM-DD" placeholder="留空不限" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="结束日期">
+          <el-date-picker v-model="form.endDate" type="date" value-format="YYYY-MM-DD" placeholder="留空不限" style="width:100%" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -85,7 +93,7 @@ const submitting = ref(false);
 const editingId = ref(null);
 const formRef = ref(null);
 
-const form = reactive({ tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0 });
+const form = reactive({ tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0, startDate: '', endDate: '' });
 const rules = {
   tenantId: [{ required: true, message: '请选择租户', trigger: 'change' }],
   applicationId: [{ required: true, message: '请选择应用', trigger: 'change' }],
@@ -117,7 +125,7 @@ async function loadRefs() {
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0 });
+  Object.assign(form, { tenantId: '', applicationId: '', granted: true, quotaType: '', quotaLimit: 0, startDate: '', endDate: '' });
   dialogVisible.value = true;
 }
 
@@ -128,12 +136,14 @@ async function openEdit(row) {
     const d = res.data || row;
     Object.assign(form, {
       tenantId: d.tenantId, applicationId: d.applicationId,
-      granted: d.granted, quotaType: d.quotaType || '', quotaLimit: d.quotaLimit || 0
+      granted: d.granted, quotaType: d.quotaType || '', quotaLimit: d.quotaLimit || 0,
+      startDate: d.startDate || '', endDate: d.endDate || '',
     });
   } catch {
     Object.assign(form, {
       tenantId: row.tenantId, applicationId: row.applicationId,
-      granted: row.granted, quotaType: row.quotaType || '', quotaLimit: row.quotaLimit || 0
+      granted: row.granted, quotaType: row.quotaType || '', quotaLimit: row.quotaLimit || 0,
+      startDate: row.startDate || '', endDate: row.endDate || '',
     });
   }
   dialogVisible.value = true;
@@ -158,6 +168,8 @@ async function handleSubmit() {
       quotaType: form.quotaType,
       quotaLimit: form.quotaLimit,
       quotaUsed: 0,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
     };
     if (editingId.value) {
       await updateLicense(editingId.value, payload);
