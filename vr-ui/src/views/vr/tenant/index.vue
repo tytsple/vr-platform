@@ -88,9 +88,13 @@ async function openEdit(row) {
 
 async function handleDel(row) {
   await ElMessageBox.confirm('确认删除该租户？', '提示', { type: 'warning' });
-  await delTenant(row.id);
-  ElMessage.success('删除成功');
-  fetchData();
+  try {
+    await delTenant(row.id);
+    ElMessage.success('删除成功');
+    fetchData();
+  } catch {
+    // 拦截器已显示错误
+  }
 }
 
 async function handleSubmit() {

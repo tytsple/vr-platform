@@ -102,8 +102,8 @@ async function loadTenants() {
 
 function openAdd() {
   editingId.value = null;
-  Object.assign(form, { userName: '', password: '', nickName: '', roleKey: 'tenant', tenantId: '', status: '0' });
   if (formRef.value) formRef.value.resetFields();
+  Object.assign(form, { userName: '', password: '', nickName: '', roleKey: 'tenant', tenantId: '', status: '0' });
   dialogVisible.value = true;
 }
 
